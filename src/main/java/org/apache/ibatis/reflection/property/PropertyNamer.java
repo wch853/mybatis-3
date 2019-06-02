@@ -15,9 +15,9 @@
  */
 package org.apache.ibatis.reflection.property;
 
-import java.util.Locale;
-
 import org.apache.ibatis.reflection.ReflectionException;
+
+import java.util.Locale;
 
 /**
  * @author Clinton Begin
@@ -28,6 +28,14 @@ public final class PropertyNamer {
     // Prevent Instantiation of Static Class
   }
 
+  /**
+   * 将属性转为字段名
+   * e.g. isSave -> save
+   * e.g. getName -> name
+   *
+   * @param name
+   * @return
+   */
   public static String methodToProperty(String name) {
     if (name.startsWith("is")) {
       name = name.substring(2);

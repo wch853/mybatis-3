@@ -27,18 +27,24 @@ public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
   private final String children;
 
   public PropertyTokenizer(String fullname) {
+    // orders[0].items[0].name
     int delim = fullname.indexOf('.');
     if (delim > -1) {
+      // name = orders[0]
       name = fullname.substring(0, delim);
+      // children = items[0].name
       children = fullname.substring(delim + 1);
     } else {
       name = fullname;
       children = null;
     }
+    // orders[0]
     indexedName = name;
     delim = name.indexOf('[');
     if (delim > -1) {
+      // 0
       index = name.substring(delim + 1, name.length() - 1);
+      // order
       name = name.substring(0, delim);
     }
   }
@@ -59,11 +65,20 @@ public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
     return children;
   }
 
+  /**
+   * 是否有children表达式继续迭代
+   *
+   * @return
+   */
   @Override
   public boolean hasNext() {
     return children != null;
   }
 
+  /**
+   * 分解出的 . 分隔符的 children 表达式可以继续迭代
+   * @return
+   */
   @Override
   public PropertyTokenizer next() {
     return new PropertyTokenizer(children);

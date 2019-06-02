@@ -18,10 +18,30 @@ package org.apache.ibatis.reflection.invoker;
 import java.lang.reflect.InvocationTargetException;
 
 /**
+ * 用于抽象设置和读取字段值的操作
+ *
+ * {@link MethodInvoker} 反射执行getter/setter方法
+ * {@link GetFieldInvoker} {@link SetFieldInvoker} 反射执行Field对象的get/set方法
+ *
  * @author Clinton Begin
  */
 public interface Invoker {
+
+  /**
+   * 通过反射设置或读取字段值
+   *
+   * @param target
+   * @param args
+   * @return
+   * @throws IllegalAccessException
+   * @throws InvocationTargetException
+   */
   Object invoke(Object target, Object[] args) throws IllegalAccessException, InvocationTargetException;
 
+  /**
+   * 字段类型
+   *
+   * @return
+   */
   Class<?> getType();
 }

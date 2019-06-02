@@ -15,24 +15,13 @@
  */
 package org.apache.ibatis.reflection.factory;
 
-import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-
 import org.apache.ibatis.reflection.ReflectionException;
 import org.apache.ibatis.reflection.Reflector;
+
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Clinton Begin
@@ -59,10 +48,20 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
     // no props for default
   }
 
+  /**
+   * 根据构造器创建对象
+   *
+   * @param type
+   * @param constructorArgTypes
+   * @param constructorArgs
+   * @param <T>
+   * @return
+   */
   private  <T> T instantiateClass(Class<T> type, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
     try {
       Constructor<T> constructor;
       if (constructorArgTypes == null || constructorArgs == null) {
+        // 使用无参构造器创建对象
         constructor = type.getDeclaredConstructor();
         try {
           return constructor.newInstance();
@@ -77,6 +76,7 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
       }
       constructor = type.getDeclaredConstructor(constructorArgTypes.toArray(new Class[constructorArgTypes.size()]));
       try {
+        // 使用有参构造器和构造器参数创建对象
         return constructor.newInstance(constructorArgs.toArray(new Object[constructorArgs.size()]));
       } catch (IllegalAccessException e) {
         if (Reflector.canControlMemberAccessible()) {

@@ -1,3 +1,22 @@
+# MyBatis 源码阅读
+base on mybatis-3.5.1
+参考书籍：徐郡明.MyBatis技术内幕[M].电子工业出版社,2017.
+
+## 反射模块
+- `org.apache.ibatis.reflection.Reflector`：缓存类的字段名和getter/setter方法的元信息，使得反射时有更好的性能。
+- `org.apache.ibatis.reflection.invoker.Invoker:`：用于抽象设置和读取字段值的操作。
+- `org.apache.ibatis.reflection.TypeParameterResolver`：针对Java-Type体系的多种实现，解析指定类中的字段、方法返回值或方法参数的类型。
+- `org.apache.ibatis.reflection.DefaultReflectorFactory`：默认的Reflector创建工厂。
+- `org.apache.ibatis.reflection.factory.ObjectFactory`：MyBatis对象创建工厂，其默认实现DefaultObjectFactory通过构造器反射创建对象。
+- `org.apache.ibatis.reflection.property`：property工具包，针对映射文件表达式进行解析和Java对象的反射赋值。
+- `org.apache.ibatis.reflection.MetaClass`：依赖PropertyTokenizer和Reflector查找表达式是否可以匹配Java对象中的字段，以及对应字段是否有getter/setter方法。
+- `org.apache.ibatis.reflection.MetaObject`：对原始对象进行封装，将对象操作委托给ObjectWrapper处理。
+- `org.apache.ibatis.reflection.wrapper.ObjectWrapper`：对象包装类，封装对象的读取和赋值等操作。
+
+
+
+=====================================
+
 MyBatis SQL Mapper Framework for Java
 =====================================
 

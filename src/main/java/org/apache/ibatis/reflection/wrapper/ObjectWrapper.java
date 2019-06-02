@@ -15,13 +15,19 @@
  */
 package org.apache.ibatis.reflection.wrapper;
 
-import java.util.List;
-
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
 
+import java.util.List;
+
 /**
+ * 对象包装类，封装对象的读取和赋值等操作。
+ *
+ * {@link BeanWrapper 简单类型包装类}
+ * {@link MapWrapper Map类型包装类}
+ * {@link CollectionWrapper Collection类型包装类}
+ *
  * @author Clinton Begin
  */
 public interface ObjectWrapper {

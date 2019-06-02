@@ -15,18 +15,20 @@
  */
 package org.apache.ibatis.reflection;
 
+import org.apache.ibatis.reflection.invoker.GetFieldInvoker;
+import org.apache.ibatis.reflection.invoker.Invoker;
+import org.apache.ibatis.reflection.invoker.MethodInvoker;
+import org.apache.ibatis.reflection.property.PropertyTokenizer;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 
-import org.apache.ibatis.reflection.invoker.GetFieldInvoker;
-import org.apache.ibatis.reflection.invoker.Invoker;
-import org.apache.ibatis.reflection.invoker.MethodInvoker;
-import org.apache.ibatis.reflection.property.PropertyTokenizer;
-
 /**
+ * 依赖PropertyTokenizer和Reflector查找表达式是否可以匹配Java对象中的字段，以及对应字段是否有getter/setter方法
+ *
  * @author Clinton Begin
  */
 public class MetaClass {
@@ -36,6 +38,7 @@ public class MetaClass {
 
   private MetaClass(Class<?> type, ReflectorFactory reflectorFactory) {
     this.reflectorFactory = reflectorFactory;
+    // 根据Reflector工厂创建reflector
     this.reflector = reflectorFactory.findForClass(type);
   }
 
@@ -43,11 +46,24 @@ public class MetaClass {
     return new MetaClass(type, reflectorFactory);
   }
 
+  /**
+   * 字段类型对应的MetaClass
+   *
+   * @param name
+   * @return
+   */
   public MetaClass metaClassForProperty(String name) {
     Class<?> propType = reflector.getGetterType(name);
     return MetaClass.forClass(propType, reflectorFactory);
   }
 
+  /**
+   * 验证传入的表达式，是否存在对应字段
+   * 如：name，查找当前类是否有name字段
+   * 如：items[0].name，则查找当前类下是否有items字段，并且items字段类型中是否有name字段，如果没用name字段
+   * @param name
+   * @return
+   */
   public String findProperty(String name) {
     StringBuilder prop = buildProperty(name, new StringBuilder());
     return prop.length() > 0 ? prop.toString() : null;
@@ -131,6 +147,12 @@ public class MetaClass {
     return null;
   }
 
+  /**
+   * 字段是否有setter方法
+   *
+   * @param name
+   * @return
+   */
   public boolean hasSetter(String name) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
@@ -145,6 +167,12 @@ public class MetaClass {
     }
   }
 
+  /**
+   * 字段是否有getter方法
+   *
+   * @param name
+   * @return
+   */
   public boolean hasGetter(String name) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
@@ -167,17 +195,30 @@ public class MetaClass {
     return reflector.getSetInvoker(name);
   }
 
+  /**
+   * 验证传入的表达式，是否存在指定的字段
+   *
+   * @param name
+   * @param builder
+   * @return
+   */
   private StringBuilder buildProperty(String name, StringBuilder builder) {
+    // 映射文件表达式迭代器
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
+      // 复杂表达式，如name = items[0].name，则prop.getName() = items
       String propertyName = reflector.findPropertyName(prop.getName());
       if (propertyName != null) {
         builder.append(propertyName);
+        // items.
         builder.append(".");
+        // 加载内嵌字段类型对应的MetaClass
         MetaClass metaProp = metaClassForProperty(propertyName);
+        // 迭代子字段
         metaProp.buildProperty(prop.getChildren(), builder);
       }
     } else {
+      // 非复杂表达式，获取字段名，如：userid->userId
       String propertyName = reflector.findPropertyName(name);
       if (propertyName != null) {
         builder.append(propertyName);

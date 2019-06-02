@@ -15,9 +15,9 @@
  */
 package org.apache.ibatis.reflection.invoker;
 
-import java.lang.reflect.Field;
-
 import org.apache.ibatis.reflection.Reflector;
+
+import java.lang.reflect.Field;
 
 /**
  * @author Clinton Begin
@@ -29,6 +29,14 @@ public class SetFieldInvoker implements Invoker {
     this.field = field;
   }
 
+  /**
+   * 直接通过Field对象做赋值操作
+   *
+   * @param target
+   * @param args
+   * @return
+   * @throws IllegalAccessException
+   */
   @Override
   public Object invoke(Object target, Object[] args) throws IllegalAccessException {
     try {

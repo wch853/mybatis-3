@@ -15,12 +15,12 @@
  */
 package org.apache.ibatis.reflection.wrapper;
 
-import java.util.List;
-import java.util.Map;
-
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.ReflectionException;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Clinton Begin
@@ -38,6 +38,7 @@ public abstract class BaseWrapper implements ObjectWrapper {
     if ("".equals(prop.getName())) {
       return object;
     } else {
+      // 在对象信息中查到此字段对应的集合对象
       return metaObject.getValue(prop.getName());
     }
   }

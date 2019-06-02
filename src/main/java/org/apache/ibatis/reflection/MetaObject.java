@@ -15,27 +15,44 @@
  */
 package org.apache.ibatis.reflection;
 
+import org.apache.ibatis.reflection.factory.ObjectFactory;
+import org.apache.ibatis.reflection.property.PropertyTokenizer;
+import org.apache.ibatis.reflection.wrapper.*;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.ibatis.reflection.factory.ObjectFactory;
-import org.apache.ibatis.reflection.property.PropertyTokenizer;
-import org.apache.ibatis.reflection.wrapper.BeanWrapper;
-import org.apache.ibatis.reflection.wrapper.CollectionWrapper;
-import org.apache.ibatis.reflection.wrapper.MapWrapper;
-import org.apache.ibatis.reflection.wrapper.ObjectWrapper;
-import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
-
 /**
+ * 对原始对象进行封装，将对象操作委托给ObjectWrapper处理
+ *
  * @author Clinton Begin
  */
 public class MetaObject {
 
+  /**
+   * 原始对象
+   */
   private final Object originalObject;
+
+  /**
+   * 包装对象，对象操作代理
+   */
   private final ObjectWrapper objectWrapper;
+
+  /**
+   * 对象创建工厂
+   */
   private final ObjectFactory objectFactory;
+
+  /**
+   * 拓展包装对象创建工厂
+   */
   private final ObjectWrapperFactory objectWrapperFactory;
+
+  /**
+   * Reflector工厂
+   */
   private final ReflectorFactory reflectorFactory;
 
   private MetaObject(Object object, ObjectFactory objectFactory, ObjectWrapperFactory objectWrapperFactory, ReflectorFactory reflectorFactory) {
@@ -44,6 +61,7 @@ public class MetaObject {
     this.objectWrapperFactory = objectWrapperFactory;
     this.reflectorFactory = reflectorFactory;
 
+    // 根据传入object类型不同，指定不同的wrapper
     if (object instanceof ObjectWrapper) {
       this.objectWrapper = (ObjectWrapper) object;
     } else if (objectWrapperFactory.hasWrapperFor(object)) {
@@ -112,6 +130,7 @@ public class MetaObject {
   public Object getValue(String name) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
+      // 如果表达式仍可迭代，递归寻找字段对应的对象
       MetaObject metaValue = metaObjectForProperty(prop.getIndexedName());
       if (metaValue == SystemMetaObject.NULL_META_OBJECT) {
         return null;
@@ -119,6 +138,7 @@ public class MetaObject {
         return metaValue.getValue(prop.getChildren());
       }
     } else {
+      // 字段解析完成
       return objectWrapper.get(prop);
     }
   }

@@ -15,23 +15,26 @@
  */
 package org.apache.ibatis.reflection.wrapper;
 
-import java.util.List;
-
-import org.apache.ibatis.reflection.ExceptionUtil;
-import org.apache.ibatis.reflection.MetaClass;
-import org.apache.ibatis.reflection.MetaObject;
-import org.apache.ibatis.reflection.ReflectionException;
-import org.apache.ibatis.reflection.SystemMetaObject;
+import org.apache.ibatis.reflection.*;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.invoker.Invoker;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
+
+import java.util.List;
 
 /**
  * @author Clinton Begin
  */
 public class BeanWrapper extends BaseWrapper {
 
+  /**
+   * 原始对象
+   */
   private final Object object;
+
+  /**
+   * 类信息
+   */
   private final MetaClass metaClass;
 
   public BeanWrapper(MetaObject metaObject, Object object) {
@@ -43,9 +46,11 @@ public class BeanWrapper extends BaseWrapper {
   @Override
   public Object get(PropertyTokenizer prop) {
     if (prop.getIndex() != null) {
+      // 集合类型，递归获取
       Object collection = resolveCollection(prop, object);
       return getCollectionValue(prop, collection);
     } else {
+      // 解析完成，反射读取
       return getBeanProperty(prop, object);
     }
   }
@@ -53,9 +58,12 @@ public class BeanWrapper extends BaseWrapper {
   @Override
   public void set(PropertyTokenizer prop, Object value) {
     if (prop.getIndex() != null) {
+      // 当前表达式是集合，如：items[0]，就需要获取items集合对象
       Object collection = resolveCollection(prop, object);
+      // 在集合的指定索引上赋值
       setCollectionValue(prop, collection, value);
     } else {
+      // 解析完成，通过Invoker接口做赋值操作
       setBeanProperty(prop, object, value);
     }
   }
@@ -157,6 +165,12 @@ public class BeanWrapper extends BaseWrapper {
     return metaValue;
   }
 
+  /**
+   * 通过Invoker接口反射执行读取操作
+   *
+   * @param prop
+   * @param object
+   */
   private Object getBeanProperty(PropertyTokenizer prop, Object object) {
     try {
       Invoker method = metaClass.getGetInvoker(prop.getName());
@@ -172,6 +186,13 @@ public class BeanWrapper extends BaseWrapper {
     }
   }
 
+  /**
+   * 通过Invoker接口反射执行赋值操作
+   *
+   * @param prop
+   * @param object
+   * @param value
+   */
   private void setBeanProperty(PropertyTokenizer prop, Object object, Object value) {
     try {
       Invoker method = metaClass.getSetInvoker(prop.getName());

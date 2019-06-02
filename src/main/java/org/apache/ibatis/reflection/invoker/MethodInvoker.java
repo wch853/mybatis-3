@@ -15,10 +15,10 @@
  */
 package org.apache.ibatis.reflection.invoker;
 
+import org.apache.ibatis.reflection.Reflector;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
-import org.apache.ibatis.reflection.Reflector;
 
 /**
  * @author Clinton Begin
@@ -32,12 +32,23 @@ public class MethodInvoker implements Invoker {
     this.method = method;
 
     if (method.getParameterTypes().length == 1) {
+      // set方法，保存入参类型
       type = method.getParameterTypes()[0];
     } else {
+      // get方法，保存返回值类型
       type = method.getReturnType();
     }
   }
 
+  /**
+   * 通过反射执行 getter/setter方法
+   *
+   * @param target
+   * @param args
+   * @return
+   * @throws IllegalAccessException
+   * @throws InvocationTargetException
+   */
   @Override
   public Object invoke(Object target, Object[] args) throws IllegalAccessException, InvocationTargetException {
     try {
