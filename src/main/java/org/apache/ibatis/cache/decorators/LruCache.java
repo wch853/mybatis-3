@@ -15,21 +15,31 @@
  */
 package org.apache.ibatis.cache.decorators;
 
+import org.apache.ibatis.cache.Cache;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import org.apache.ibatis.cache.Cache;
-
 /**
  * Lru (least recently used) cache decorator.
+ *
+ * 缓存最近最久未使用装饰器。基于 LinkedHashMap，维护 key 的 LRU 顺序。
  *
  * @author Clinton Begin
  */
 public class LruCache implements Cache {
 
   private final Cache delegate;
+
+  /**
+   * 基于 LinkedHashMap 实现，维护 key 的使用顺序
+   */
   private Map<Object, Object> keyMap;
+
+  /**
+   * 最近最久未使用的 key，如果超出缓存项数量限制，会更新此字段
+   */
   private Object eldestKey;
 
   public LruCache(Cache delegate) {
@@ -48,6 +58,7 @@ public class LruCache implements Cache {
   }
 
   public void setSize(final int size) {
+    // LinkedHashMap 在执行 get 方法后会将对应的 entry 移到队尾来维护使用顺序
     keyMap = new LinkedHashMap<Object, Object>(size, .75F, true) {
       private static final long serialVersionUID = 4267176411845948333L;
 
@@ -55,6 +66,7 @@ public class LruCache implements Cache {
       protected boolean removeEldestEntry(Map.Entry<Object, Object> eldest) {
         boolean tooBig = size() > size;
         if (tooBig) {
+          // 超出缓存项数量限制，获取最近最久未使用的key
           eldestKey = eldest.getKey();
         }
         return tooBig;
@@ -62,6 +74,9 @@ public class LruCache implements Cache {
     };
   }
 
+  /**
+   * 更新缓存后检查是否需要删除最近最久未使用的缓存项
+   */
   @Override
   public void putObject(Object key, Object value) {
     delegate.putObject(key, value);

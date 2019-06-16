@@ -15,37 +15,48 @@
  */
 package org.apache.ibatis.logging.jdbc;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.reflection.ArrayUtil;
+
 import java.lang.reflect.Method;
 import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.stream.Collectors;
-
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.reflection.ArrayUtil;
 
 /**
  * Base class for proxies to do logging.
+ * SQL执行日志工具类，针对执行 Connection、PrepareStatement、Statement、ResultSet 类中的相关方法，提供日志记录工具。
  *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
 public abstract class BaseJdbcLogger {
 
+  /**
+   * PreparedStatement 接口中的 set* 方法名称集合
+   */
   protected static final Set<String> SET_METHODS;
+
+  /**
+   * PreparedStatement 接口中的 部分执行方法
+   */
   protected static final Set<String> EXECUTE_METHODS = new HashSet<>();
 
+  /**
+   * 列名-列值
+   */
   private final Map<Object, Object> columnMap = new HashMap<>();
 
+  /**
+   * 列名集合
+   */
   private final List<Object> columnNames = new ArrayList<>();
+
+  /**
+   * 列值集合
+   */
   private final List<Object> columnValues = new ArrayList<>();
 
   protected final Log statementLog;
@@ -86,6 +97,11 @@ public abstract class BaseJdbcLogger {
     return columnMap.get(key);
   }
 
+  /**
+   * 所有列值按类型组成的字符串
+   *
+   * @return
+   */
   protected String getParameterValueString() {
     List<Object> typeList = new ArrayList<>(columnValues.size());
     for (Object value : columnValues) {
@@ -120,6 +136,12 @@ public abstract class BaseJdbcLogger {
     columnValues.clear();
   }
 
+  /**
+   * tab、回车、换行、换页符转为空格
+   *
+   * @param original
+   * @return
+   */
   protected String removeBreakingWhitespace(String original) {
     StringTokenizer whitespaceStripper = new StringTokenizer(original);
     StringBuilder builder = new StringBuilder();
@@ -150,6 +172,14 @@ public abstract class BaseJdbcLogger {
     }
   }
 
+  /**
+   * 格式化日志前缀
+   * 以 = 控制缩进
+   * 以 > < 表明是输入还是输出
+   *
+   * @param isInput
+   * @return
+   */
   private String prefix(boolean isInput) {
     char[] buffer = new char[queryStack * 2 + 2];
     Arrays.fill(buffer, '=');

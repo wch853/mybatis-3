@@ -15,21 +15,22 @@
  */
 package org.apache.ibatis.transaction.jdbc;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.sql.DataSource;
-
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionException;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+
 /**
  * {@link Transaction} that makes use of the JDBC commit and rollback facilities directly.
  * It relies on the connection retrieved from the dataSource to manage the scope of the transaction.
  * Delays connection retrieval until getConnection() is called.
  * Ignores commit or rollback requests when autocommit is on.
+ * 封装 JDBC 数据库事务操作
  *
  * @author Clinton Begin
  *
@@ -39,9 +40,24 @@ public class JdbcTransaction implements Transaction {
 
   private static final Log log = LogFactory.getLog(JdbcTransaction.class);
 
+  /**
+   * 连接
+   */
   protected Connection connection;
+
+  /**
+   * 数据源
+   */
   protected DataSource dataSource;
+
+  /**
+   * 事务隔离级别
+   */
   protected TransactionIsolationLevel level;
+
+  /**
+   * 是否自动提交
+   */
   protected boolean autoCommit;
 
   public JdbcTransaction(DataSource ds, TransactionIsolationLevel desiredLevel, boolean desiredAutoCommit) {
@@ -57,11 +73,17 @@ public class JdbcTransaction implements Transaction {
   @Override
   public Connection getConnection() throws SQLException {
     if (connection == null) {
+      // 打开新连接
       openConnection();
     }
     return connection;
   }
 
+  /**
+   * 手动提交
+   *
+   * @throws SQLException
+   */
   @Override
   public void commit() throws SQLException {
     if (connection != null && !connection.getAutoCommit()) {
@@ -72,6 +94,11 @@ public class JdbcTransaction implements Transaction {
     }
   }
 
+  /**
+   * 手动回滚
+   *
+   * @throws SQLException
+   */
   @Override
   public void rollback() throws SQLException {
     if (connection != null && !connection.getAutoCommit()) {
@@ -82,6 +109,11 @@ public class JdbcTransaction implements Transaction {
     }
   }
 
+  /**
+   * 关闭连接
+   *
+   * @throws SQLException
+   */
   @Override
   public void close() throws SQLException {
     if (connection != null) {
@@ -93,6 +125,11 @@ public class JdbcTransaction implements Transaction {
     }
   }
 
+  /**
+   * 设置自动提交属性
+   *
+   * @param desiredAutoCommit
+   */
   protected void setDesiredAutoCommit(boolean desiredAutoCommit) {
     try {
       if (connection.getAutoCommit() != desiredAutoCommit) {
@@ -110,6 +147,9 @@ public class JdbcTransaction implements Transaction {
     }
   }
 
+  /**
+   * 非自动提交修改为自动提交
+   */
   protected void resetAutoCommit() {
     try {
       if (!connection.getAutoCommit()) {
@@ -131,6 +171,10 @@ public class JdbcTransaction implements Transaction {
     }
   }
 
+  /**
+   * 新建连接
+   * @throws SQLException
+   */
   protected void openConnection() throws SQLException {
     if (log.isDebugEnabled()) {
       log.debug("Opening JDBC Connection");

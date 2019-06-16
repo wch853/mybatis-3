@@ -15,24 +15,17 @@
  */
 package org.apache.ibatis.type;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.ibatis.io.ResolverUtil;
 import org.apache.ibatis.io.Resources;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.ResultSet;
+import java.util.*;
+
 /**
+ * 别名注册类。注册常用类型的别名，并提供多种注册别名的方式
+ *
  * @author Clinton Begin
  */
 public class TypeAliasRegistry {
@@ -121,12 +114,24 @@ public class TypeAliasRegistry {
     }
   }
 
+  /**
+   * 注册指定包下所有类型别名
+   *
+   * @param packageName
+   */
   public void registerAliases(String packageName) {
     registerAliases(packageName, Object.class);
   }
 
+  /**
+   * 注册指定包下指定类型的别名
+   *
+   * @param packageName
+   * @param superType
+   */
   public void registerAliases(String packageName, Class<?> superType) {
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<>();
+    // 找出该包下superType所有的子类
     resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
     Set<Class<? extends Class<?>>> typeSet = resolverUtil.getClasses();
     for (Class<?> type : typeSet) {
@@ -138,8 +143,14 @@ public class TypeAliasRegistry {
     }
   }
 
+  /**
+   * 注册类型别名，默认为简单类名，优先从Alias注解获取
+   *
+   * @param type
+   */
   public void registerAlias(Class<?> type) {
     String alias = type.getSimpleName();
+    // 从Alias注解读取别名
     Alias aliasAnnotation = type.getAnnotation(Alias.class);
     if (aliasAnnotation != null) {
       alias = aliasAnnotation.value();
@@ -147,6 +158,12 @@ public class TypeAliasRegistry {
     registerAlias(alias, type);
   }
 
+  /**
+   * 注册类型别名
+   *
+   * @param alias 别名
+   * @param value 类型
+   */
   public void registerAlias(String alias, Class<?> value) {
     if (alias == null) {
       throw new TypeException("The parameter alias cannot be null");
@@ -159,6 +176,11 @@ public class TypeAliasRegistry {
     typeAliases.put(key, value);
   }
 
+  /**
+   * 注册类型别名
+   * @param alias 别名
+   * @param value 指定类型全名
+   */
   public void registerAlias(String alias, String value) {
     try {
       registerAlias(alias, Resources.classForName(value));

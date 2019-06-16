@@ -15,19 +15,28 @@
  */
 package org.apache.ibatis.binding;
 
+import org.apache.ibatis.session.SqlSession;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.ibatis.session.SqlSession;
-
 /**
+ * Mapper 接口代理创建工厂
+ *
  * @author Lasse Voss
  */
 public class MapperProxyFactory<T> {
 
+  /**
+   * Mapper 接口类型
+   */
   private final Class<T> mapperInterface;
+
+  /**
+   * Mapper 接口方法 - 接口对应的方法信息和 SQL 执行信息
+   */
   private final Map<Method, MapperMethod> methodCache = new ConcurrentHashMap<>();
 
   public MapperProxyFactory(Class<T> mapperInterface) {
@@ -47,6 +56,12 @@ public class MapperProxyFactory<T> {
     return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[] { mapperInterface }, mapperProxy);
   }
 
+  /**
+   * 使用 Mapper 代理封装 SqlSession 相关操作
+   *
+   * @param sqlSession
+   * @return
+   */
   public T newInstance(SqlSession sqlSession) {
     final MapperProxy<T> mapperProxy = new MapperProxy<>(sqlSession, mapperInterface, methodCache);
     return newInstance(mapperProxy);

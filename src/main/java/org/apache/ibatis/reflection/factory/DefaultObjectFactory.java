@@ -24,6 +24,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * MyBatis 默认对象创建工厂
+ * {@link DefaultObjectFactory#instantiateClass(java.lang.Class, java.util.List, java.util.List)}
+ *
  * @author Clinton Begin
  */
 public class DefaultObjectFactory implements ObjectFactory, Serializable {

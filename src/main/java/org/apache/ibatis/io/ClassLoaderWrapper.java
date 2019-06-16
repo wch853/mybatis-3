@@ -20,6 +20,7 @@ import java.net.URL;
 
 /**
  * A class to wrap access to multiple class loaders making them work as one
+ * 资源加载底层实现。组合多种 ClassLoader 按顺序尝试加载资源。
  *
  * @author Clinton Begin
  */
@@ -176,13 +177,13 @@ public class ClassLoaderWrapper {
    * @throws ClassNotFoundException - Remember the wisdom of Judge Smails: Well, the world needs ditch diggers, too.
    */
   Class<?> classForName(String name, ClassLoader[] classLoader) throws ClassNotFoundException {
-
+    // 按组合顺序依次加载
     for (ClassLoader cl : classLoader) {
 
       if (null != cl) {
 
         try {
-
+          // 类加载
           Class<?> c = Class.forName(name, true, cl);
 
           if (null != c) {
@@ -203,10 +204,15 @@ public class ClassLoaderWrapper {
 
   ClassLoader[] getClassLoaders(ClassLoader classLoader) {
     return new ClassLoader[]{
+            // 指定 ClassLoader
         classLoader,
+            // 默认 ClassLoader，默认为 null
         defaultClassLoader,
+            // 当前线程对应的 ClassLoader
         Thread.currentThread().getContextClassLoader(),
+            // 当前类对应的 ClassLoader
         getClass().getClassLoader(),
+            // 默认为 SystemClassLoader
         systemClassLoader};
   }
 

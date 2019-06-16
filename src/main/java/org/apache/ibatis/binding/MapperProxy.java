@@ -15,6 +15,9 @@
  */
 package org.apache.ibatis.binding;
 
+import org.apache.ibatis.reflection.ExceptionUtil;
+import org.apache.ibatis.session.SqlSession;
+
 import java.io.Serializable;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
@@ -23,10 +26,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 
-import org.apache.ibatis.reflection.ExceptionUtil;
-import org.apache.ibatis.session.SqlSession;
-
 /**
+ * Mapper 接口方法代理逻辑，封装 SqlSession 相关操作
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -47,21 +49,40 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
       if (Object.class.equals(method.getDeclaringClass())) {
+        // Object中的方法，直接执行
         return method.invoke(this, args);
       } else if (isDefaultMethod(method)) {
+        // 当前方法是接口中的非abstract、非static的public方法，即高版本JDK中的default方法
         return invokeDefaultMethod(proxy, method, args);
       }
     } catch (Throwable t) {
       throw ExceptionUtil.unwrapThrowable(t);
     }
+    // 缓存 Mapper接口 对应的方法和 SQL 执行信息
     final MapperMethod mapperMethod = cachedMapperMethod(method);
+    // 执行 SQL
     return mapperMethod.execute(sqlSession, args);
   }
 
+  /**
+   * 缓存 Mapper接口 对应的方法和 SQL 执行信息
+   *
+   * @param method
+   * @return
+   */
   private MapperMethod cachedMapperMethod(Method method) {
     return methodCache.computeIfAbsent(method, k -> new MapperMethod(mapperInterface, method, sqlSession.getConfiguration()));
   }
 
+  /**
+   * 执行接口中的 default 方法
+   *
+   * @param proxy
+   * @param method
+   * @param args
+   * @return
+   * @throws Throwable
+   */
   private Object invokeDefaultMethod(Object proxy, Method method, Object[] args)
       throws Throwable {
     final Constructor<MethodHandles.Lookup> constructor = MethodHandles.Lookup.class
@@ -79,6 +100,8 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
 
   /**
    * Backport of java.lang.reflect.Method#isDefault()
+   * 针对高版本JDK
+   * 判断方法是否是接口中的非abstract、非static的public方法
    */
   private boolean isDefaultMethod(Method method) {
     return (method.getModifiers()
