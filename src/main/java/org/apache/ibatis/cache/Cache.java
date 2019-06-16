@@ -36,23 +36,31 @@ import java.util.concurrent.locks.ReadWriteLock;
  * }
  * </pre>
  *
+ * 缓存抽象接口
+ *
  * @author Clinton Begin
  */
 
 public interface Cache {
 
   /**
+   * 缓存对象 id
+   *
    * @return The identifier of this cache
    */
   String getId();
 
   /**
+   * 设置缓存
+   *
    * @param key Can be any object but usually it is a {@link CacheKey}
    * @param value The result of a select.
    */
   void putObject(Object key, Object value);
 
   /**
+   * 获取缓存
+   *
    * @param key The key
    * @return The object stored in the cache.
    */
@@ -67,7 +75,7 @@ public interface Cache {
    * and releases it when the value is back again.
    * This way other threads will wait for the value to be
    * available instead of hitting the database.
-   *
+   * 移除缓存
    *
    * @param key The key
    * @return Not used
@@ -75,12 +83,15 @@ public interface Cache {
   Object removeObject(Object key);
 
   /**
+   * 清空缓存
+   *
    * Clears this cache instance.
    */
   void clear();
 
   /**
    * Optional. This method is not called by the core.
+   * 获取缓存项数量
    *
    * @return The number of elements stored in the cache (not its capacity).
    */
@@ -90,6 +101,7 @@ public interface Cache {
    * Optional. As of 3.2.6 this method is no longer called by the core.
    * <p>
    * Any locking needed by the cache must be provided internally by the cache provider.
+   * 获取读写锁
    *
    * @return A ReadWriteLock
    */

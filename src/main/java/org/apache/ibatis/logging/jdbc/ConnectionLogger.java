@@ -15,6 +15,9 @@
  */
 package org.apache.ibatis.logging.jdbc;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.reflection.ExceptionUtil;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -22,11 +25,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.reflection.ExceptionUtil;
-
 /**
  * Connection proxy to add logging.
+ * Connection 日志代理对象
  *
  * @author Clinton Begin
  * @author Eduardo Macarron
@@ -41,6 +42,15 @@ public final class ConnectionLogger extends BaseJdbcLogger implements Invocation
     this.connection = conn;
   }
 
+  /**
+   * 使用PreparedStatementLogger或StatementLogger 代理PreparedStatement或Statement对象，增加写日志逻辑
+   *
+   * @param proxy
+   * @param method
+   * @param params
+   * @return
+   * @throws Throwable
+   */
   @Override
   public Object invoke(Object proxy, Method method, Object[] params)
       throws Throwable {
@@ -53,6 +63,7 @@ public final class ConnectionLogger extends BaseJdbcLogger implements Invocation
           debug(" Preparing: " + removeBreakingWhitespace((String) params[0]), true);
         }
         PreparedStatement stmt = (PreparedStatement) method.invoke(connection, params);
+        // 执行创建PreparedStatement方法，使用PreparedStatementLogger代理
         stmt = PreparedStatementLogger.newInstance(stmt, statementLog, queryStack);
         return stmt;
       } else if ("prepareCall".equals(method.getName())) {

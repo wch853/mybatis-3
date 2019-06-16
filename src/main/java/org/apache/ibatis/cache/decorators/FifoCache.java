@@ -15,14 +15,17 @@
  */
 package org.apache.ibatis.cache.decorators;
 
+import org.apache.ibatis.cache.Cache;
+
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import org.apache.ibatis.cache.Cache;
-
 /**
  * FIFO (first in, first out) cache decorator.
+ *
+ * 缓存先进先出装饰器。
+ * 按写缓存顺序维护缓存 key 队列，缓存项超出指定大小，删除最先入队的缓存
  *
  * @author Clinton Begin
  */
@@ -30,6 +33,10 @@ public class FifoCache implements Cache {
 
   private final Cache delegate;
   private final Deque<Object> keyList;
+
+  /**
+   * 限制缓存大小
+   */
   private int size;
 
   public FifoCache(Cache delegate) {
@@ -79,6 +86,11 @@ public class FifoCache implements Cache {
     return null;
   }
 
+  /**
+   * 按写缓存顺序维护缓存 key 队列，缓存项超出指定大小，删除最先入队的缓存
+   *
+   * @param key
+   */
   private void cycleKeyList(Object key) {
     keyList.addLast(key);
     if (keyList.size() > size) {

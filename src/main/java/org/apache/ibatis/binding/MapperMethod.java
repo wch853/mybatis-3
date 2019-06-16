@@ -15,15 +15,6 @@
  */
 package org.apache.ibatis.binding;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import org.apache.ibatis.annotations.Flush;
 import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.cursor.Cursor;
@@ -38,7 +29,18 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 /**
+ * 封装 Mapper 接口对应的方法和 SQL 执行信息
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  * @author Lasse Voss
@@ -50,30 +52,44 @@ public class MapperMethod {
   private final MethodSignature method;
 
   public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
+    // SQL 执行信息
     this.command = new SqlCommand(config, mapperInterface, method);
+    // 获取方法参数和返回值相关信息
     this.method = new MethodSignature(config, mapperInterface, method);
   }
 
+  /**
+   * 执行 SQL
+   *
+   * @param sqlSession
+   * @param args
+   * @return
+   */
   public Object execute(SqlSession sqlSession, Object[] args) {
     Object result;
     switch (command.getType()) {
       case INSERT: {
+        // 获取 SQL 执行参数或参数名与参数的对应关系
         Object param = method.convertArgsToSqlCommandParam(args);
+        // 执行 insert 操作
         result = rowCountResult(sqlSession.insert(command.getName(), param));
         break;
       }
       case UPDATE: {
         Object param = method.convertArgsToSqlCommandParam(args);
+        // 执行 update 操作
         result = rowCountResult(sqlSession.update(command.getName(), param));
         break;
       }
       case DELETE: {
         Object param = method.convertArgsToSqlCommandParam(args);
+        // 执行 delete 操作
         result = rowCountResult(sqlSession.delete(command.getName(), param));
         break;
       }
       case SELECT:
         if (method.returnsVoid() && method.hasResultHandler()) {
+          // 执行参数有 ResultHandler 的方法
           executeWithResultHandler(sqlSession, args);
           result = null;
         } else if (method.returnsMany()) {
@@ -104,15 +120,25 @@ public class MapperMethod {
     return result;
   }
 
+  /**
+   * 根据影响行数和返回值类型的不同返回不同数据
+   *
+   * @param rowCount
+   * @return
+   */
   private Object rowCountResult(int rowCount) {
     final Object result;
     if (method.returnsVoid()) {
+      // 返回 null
       result = null;
     } else if (Integer.class.equals(method.getReturnType()) || Integer.TYPE.equals(method.getReturnType())) {
+      // 返回影响的行的数量
       result = rowCount;
     } else if (Long.class.equals(method.getReturnType()) || Long.TYPE.equals(method.getReturnType())) {
+      // 返回影响的行的数量
       result = (long)rowCount;
     } else if (Boolean.class.equals(method.getReturnType()) || Boolean.TYPE.equals(method.getReturnType())) {
+      // 返回影响的行的数量是否大于0
       result = rowCount > 0;
     } else {
       throw new BindingException("Mapper method '" + command.getName() + "' has an unsupported return type: " + method.getReturnType());
@@ -120,6 +146,12 @@ public class MapperMethod {
     return result;
   }
 
+  /**
+   * 执行参数有 ResultHandler 的方法
+   *
+   * @param sqlSession
+   * @param args
+   */
   private void executeWithResultHandler(SqlSession sqlSession, Object[] args) {
     MappedStatement ms = sqlSession.getConfiguration().getMappedStatement(command.getName());
     if (!StatementType.CALLABLE.equals(ms.getStatementType())
@@ -128,6 +160,7 @@ public class MapperMethod {
           + " needs either a @ResultMap annotation, a @ResultType annotation,"
           + " or a resultType attribute in XML so a ResultHandler can be used as a parameter.");
     }
+    // 获取 SQL 执行参数或参数名与参数的对应关系
     Object param = method.convertArgsToSqlCommandParam(args);
     if (method.hasRowBounds()) {
       RowBounds rowBounds = method.extractRowBounds(args);
@@ -216,18 +249,30 @@ public class MapperMethod {
 
   }
 
+  /**
+   * 封装 SQL 执行信息
+   */
   public static class SqlCommand {
 
+    /**
+     * 执行的 SQL 方法名
+     */
     private final String name;
+
+    /**
+     * 执行的 SQL 类型
+     */
     private final SqlCommandType type;
 
     public SqlCommand(Configuration configuration, Class<?> mapperInterface, Method method) {
       final String methodName = method.getName();
       final Class<?> declaringClass = method.getDeclaringClass();
+      // 递归查找对应的 MappedStatement
       MappedStatement ms = resolveMappedStatement(mapperInterface, methodName, declaringClass,
           configuration);
       if (ms == null) {
         if (method.getAnnotation(Flush.class) != null) {
+          // 未找到对应的 MappedStatement，由可能是 Flush 语句
           name = null;
           type = SqlCommandType.FLUSH;
         } else {
@@ -251,14 +296,27 @@ public class MapperMethod {
       return type;
     }
 
+    /**
+     * 查询方法对应的 SQL statement
+     *
+     * @param mapperInterface
+     * @param methodName
+     * @param declaringClass
+     * @param configuration
+     * @return
+     */
     private MappedStatement resolveMappedStatement(Class<?> mapperInterface, String methodName,
         Class<?> declaringClass, Configuration configuration) {
+      // statementId 为接口名与方法名组合
       String statementId = mapperInterface.getName() + "." + methodName;
       if (configuration.hasStatement(statementId)) {
+        // 配置中存在此 statementId，返回对应的 statement
         return configuration.getMappedStatement(statementId);
       } else if (mapperInterface.equals(declaringClass)) {
+        // 此方法就是在对应接口中声明的
         return null;
       }
+      // 递归查找父类
       for (Class<?> superInterface : mapperInterface.getInterfaces()) {
         if (declaringClass.isAssignableFrom(superInterface)) {
           MappedStatement ms = resolveMappedStatement(superInterface, methodName,
@@ -272,17 +330,59 @@ public class MapperMethod {
     }
   }
 
+  /**
+   * 方法参数和返回值相关信息
+   */
   public static class MethodSignature {
 
+    /**
+     * 方法返回值是否为集合或数组
+     */
     private final boolean returnsMany;
+
+    /**
+     * 方法返回值是否为 Map 类型且方法的 MapKey 注解有效
+     */
     private final boolean returnsMap;
+
+    /**
+     * 方法返回值是否为 void 类型
+     */
     private final boolean returnsVoid;
+
+    /**
+     * 方法返回值是否为 Cursor
+     */
     private final boolean returnsCursor;
+
+    /**
+     * 方法返回值是否为 Optional
+     */
     private final boolean returnsOptional;
+
+    /**
+     * 方法返回值类型
+     */
     private final Class<?> returnType;
+
+    /**
+     * 返回值若为 Map 类型，获取方法 MapKey 注解的值
+     */
     private final String mapKey;
+
+    /**
+     * ResultHandler 参数在方法参数中的顺序
+     */
     private final Integer resultHandlerIndex;
+
+    /**
+     * RowBounds 参数在方法参数中的顺序
+     */
     private final Integer rowBoundsIndex;
+
+    /**
+     * 解析方法参数的 {@link org.apache.ibatis.annotations.Param} 注解
+     */
     private final ParamNameResolver paramNameResolver;
 
     public MethodSignature(Configuration configuration, Class<?> mapperInterface, Method method) {
@@ -305,6 +405,12 @@ public class MapperMethod {
       this.paramNameResolver = new ParamNameResolver(configuration, method);
     }
 
+    /**
+     * 获取 SQL 执行参数或参数名与参数的对应关系
+     *
+     * @param args
+     * @return
+     */
     public Object convertArgsToSqlCommandParam(Object[] args) {
       return paramNameResolver.getNamedParams(args);
     }
@@ -373,6 +479,12 @@ public class MapperMethod {
       return index;
     }
 
+    /**
+     * 返回值若为 Map 类型，获取方法 MapKey 注解的值
+     *
+     * @param method
+     * @return
+     */
     private String getMapKey(Method method) {
       String mapKey = null;
       if (Map.class.isAssignableFrom(method.getReturnType())) {

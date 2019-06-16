@@ -15,6 +15,9 @@
  */
 package org.apache.ibatis.logging.jdbc;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.reflection.ExceptionUtil;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -26,11 +29,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.StringJoiner;
 
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.reflection.ExceptionUtil;
-
 /**
  * ResultSet proxy to add logging.
+ * ResultSet 日志代理对象
  *
  * @author Clinton Begin
  * @author Eduardo Macarron

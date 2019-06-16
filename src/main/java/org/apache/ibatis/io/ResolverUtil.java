@@ -15,14 +15,14 @@
  */
 package org.apache.ibatis.io;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
+
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.logging.LogFactory;
 
 /**
  * <p>ResolverUtil is used to locate classes that are available in the/a class path and meet
@@ -54,6 +54,8 @@ import org.apache.ibatis.logging.LogFactory;
  * Collection&lt;ActionBean&gt; beans = resolver.getClasses();
  * </pre>
  *
+ * 按条件加载指定包下的类。
+ *
  * @author Tim Fennell
  */
 public class ResolverUtil<T> {
@@ -77,6 +79,8 @@ public class ResolverUtil<T> {
   /**
    * A Test that checks to see if each class is assignable to the provided class. Note
    * that this test will match the parent type itself if it is presented for matching.
+   *
+   * 判断是否为子类
    */
   public static class IsA implements Test {
     private Class<?> parent;
@@ -101,6 +105,8 @@ public class ResolverUtil<T> {
   /**
    * A Test that checks to see if each class is annotated with a specific annotation. If it
    * is, then the test returns true, otherwise false.
+   *
+   * 判断类上是否有指定注解
    */
   public static class AnnotatedWith implements Test {
     private Class<? extends Annotation> annotation;
@@ -214,12 +220,15 @@ public class ResolverUtil<T> {
    *        classes, e.g. {@code net.sourceforge.stripes}
    */
   public ResolverUtil<T> find(Test test, String packageName) {
+    // 包名.替换为/
     String path = getPackagePath(packageName);
 
     try {
+      // 虚拟文件系统加载文件路径
       List<String> children = VFS.getInstance().list(path);
       for (String child : children) {
         if (child.endsWith(".class")) {
+          // 如果指定class文件符合条件，加入容器
           addIfMatching(test, child);
         }
       }
@@ -255,9 +264,10 @@ public class ResolverUtil<T> {
       if (log.isDebugEnabled()) {
         log.debug("Checking to see if class " + externalName + " matches criteria [" + test + "]");
       }
-
+      // 加载类
       Class<?> type = loader.loadClass(externalName);
       if (test.matches(type)) {
+        // 符合条件，加入容器
         matches.add((Class<T>) type);
       }
     } catch (Throwable t) {

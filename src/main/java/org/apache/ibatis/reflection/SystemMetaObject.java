@@ -21,6 +21,8 @@ import org.apache.ibatis.reflection.wrapper.DefaultObjectWrapperFactory;
 import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
 
 /**
+ * 创建系统对象信息
+ *
  * @author Clinton Begin
  */
 public final class SystemMetaObject {
@@ -36,6 +38,11 @@ public final class SystemMetaObject {
   private static class NullObject {
   }
 
+  /**
+   * 获取系统 MetaObject 实现
+   * @param object
+   * @return
+   */
   public static MetaObject forObject(Object object) {
     return MetaObject.forObject(object, DEFAULT_OBJECT_FACTORY, DEFAULT_OBJECT_WRAPPER_FACTORY, new DefaultReflectorFactory());
   }

@@ -15,15 +15,15 @@
  */
 package org.apache.ibatis.cache.decorators;
 
+import org.apache.ibatis.cache.Cache;
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
-
-import org.apache.ibatis.cache.Cache;
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.logging.LogFactory;
 
 /**
  * The 2nd level cache transactional buffer.
@@ -33,6 +33,8 @@ import org.apache.ibatis.logging.LogFactory;
  * Blocking cache support has been added. Therefore any get() that returns a cache miss
  * will be followed by a put() so any lock associated with the key can be released.
  *
+ * 事务缓存装饰器。在事务提交后再将缓存写入，如果发生回滚则不写入。
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -41,8 +43,20 @@ public class TransactionalCache implements Cache {
   private static final Log log = LogFactory.getLog(TransactionalCache.class);
 
   private final Cache delegate;
+
+  /**
+   * 事务提交时是否清除全部缓存标识
+   */
   private boolean clearOnCommit;
+
+  /**
+   * 暂存缓存
+   */
   private final Map<Object, Object> entriesToAddOnCommit;
+
+  /**
+   * 未获取到缓存的 key
+   */
   private final Set<Object> entriesMissedInCache;
 
   public TransactionalCache(Cache delegate) {
@@ -117,6 +131,9 @@ public class TransactionalCache implements Cache {
     entriesMissedInCache.clear();
   }
 
+  /**
+   * 事务提交，提交待提交的缓存。
+   */
   private void flushPendingEntries() {
     for (Map.Entry<Object, Object> entry : entriesToAddOnCommit.entrySet()) {
       delegate.putObject(entry.getKey(), entry.getValue());
@@ -128,6 +145,9 @@ public class TransactionalCache implements Cache {
     }
   }
 
+  /**
+   * 事务回滚，清理未命中缓存。
+   */
   private void unlockMissedEntries() {
     for (Object entry : entriesMissedInCache) {
       try {

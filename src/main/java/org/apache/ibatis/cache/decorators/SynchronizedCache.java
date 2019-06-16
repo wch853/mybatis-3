@@ -15,11 +15,12 @@
  */
 package org.apache.ibatis.cache.decorators;
 
-import java.util.concurrent.locks.ReadWriteLock;
-
 import org.apache.ibatis.cache.Cache;
 
+import java.util.concurrent.locks.ReadWriteLock;
+
 /**
+ * 缓存同步装饰器。在缓存操作方法上使用 synchronized 关键字同步。
  * @author Clinton Begin
  */
 public class SynchronizedCache implements Cache {

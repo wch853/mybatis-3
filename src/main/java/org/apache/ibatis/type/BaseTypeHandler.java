@@ -15,13 +15,13 @@
  */
 package org.apache.ibatis.type;
 
+import org.apache.ibatis.executor.result.ResultMapException;
+import org.apache.ibatis.session.Configuration;
+
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import org.apache.ibatis.executor.result.ResultMapException;
-import org.apache.ibatis.session.Configuration;
 
 /**
  * The base {@link TypeHandler} for references a generic type.
@@ -30,6 +30,9 @@ import org.apache.ibatis.session.Configuration;
  * {@link CallableStatement#wasNull()} method for handling the SQL {@code NULL} value.
  * In other words, {@code null} value handling should be performed on subclass.
  * </p>
+ *
+ * 包装 {@link TypeHandler}
+ * 针对null和异常处理做了封装，具体逻辑仍由相应的类型转换器实现。
  *
  * @author Clinton Begin
  * @author Simone Tripodi

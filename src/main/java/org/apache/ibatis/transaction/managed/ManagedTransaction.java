@@ -15,20 +15,22 @@
  */
 package org.apache.ibatis.transaction.managed;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.sql.DataSource;
-
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * {@link Transaction} that lets the container manage the full lifecycle of the transaction.
  * Delays connection retrieval until getConnection() is called.
  * Ignores all commit or rollback requests.
  * By default, it closes the connection but can be configured not to do it.
+ *
+ * 数据库事务操作依赖外部管理
  *
  * @author Clinton Begin
  *
@@ -38,9 +40,21 @@ public class ManagedTransaction implements Transaction {
 
   private static final Log log = LogFactory.getLog(ManagedTransaction.class);
 
+  /**
+   * 数据源
+   */
   private DataSource dataSource;
+
+  /**
+   * 事务隔离级别
+   */
   private TransactionIsolationLevel level;
+
+  /**
+   * 连接
+   */
   private Connection connection;
+
   private final boolean closeConnection;
 
   public ManagedTransaction(Connection connection, boolean closeConnection) {
@@ -54,6 +68,12 @@ public class ManagedTransaction implements Transaction {
     this.closeConnection = closeConnection;
   }
 
+  /**
+   * 获取连接
+   *
+   * @return
+   * @throws SQLException
+   */
   @Override
   public Connection getConnection() throws SQLException {
     if (this.connection == null) {
@@ -72,6 +92,11 @@ public class ManagedTransaction implements Transaction {
     // Does nothing
   }
 
+  /**
+   * 关闭连接
+   *
+   * @throws SQLException
+   */
   @Override
   public void close() throws SQLException {
     if (this.closeConnection && this.connection != null) {
@@ -82,6 +107,11 @@ public class ManagedTransaction implements Transaction {
     }
   }
 
+  /**
+   * 新建连接
+   *
+   * @throws SQLException
+   */
   protected void openConnection() throws SQLException {
     if (log.isDebugEnabled()) {
       log.debug("Opening JDBC Connection");

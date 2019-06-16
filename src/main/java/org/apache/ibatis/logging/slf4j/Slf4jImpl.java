@@ -22,6 +22,8 @@ import org.slf4j.Marker;
 import org.slf4j.spi.LocationAwareLogger;
 
 /**
+ * MyBatis 对 Slf4j 的适配实现
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -30,6 +32,7 @@ public class Slf4jImpl implements Log {
   private Log log;
 
   public Slf4jImpl(String clazz) {
+    // 获取logger对象
     Logger logger = LoggerFactory.getLogger(clazz);
 
     if (logger instanceof LocationAwareLogger) {

@@ -16,6 +16,8 @@
 package org.apache.ibatis.logging;
 
 /**
+ * MyBatis日志适配接口，支持 trace、debug、warn、error 四种级别
+ *
  * @author Clinton Begin
  */
 public interface Log {

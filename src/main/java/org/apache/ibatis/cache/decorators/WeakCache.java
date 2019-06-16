@@ -15,17 +15,19 @@
  */
 package org.apache.ibatis.cache.decorators;
 
+import org.apache.ibatis.cache.Cache;
+
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import org.apache.ibatis.cache.Cache;
-
 /**
  * Weak Reference cache decorator.
  * Thanks to Dr. Heinz Kabutz for his guidance here.
+ *
+ * 缓存弱引用装饰器。使用弱引用 + 强引用队列的方式维护缓存。{@link SoftCache}
  *
  * @author Clinton Begin
  */
