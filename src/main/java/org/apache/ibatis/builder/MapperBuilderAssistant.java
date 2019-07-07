@@ -15,47 +15,45 @@
  */
 package org.apache.ibatis.builder;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.StringTokenizer;
-
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.decorators.LruCache;
 import org.apache.ibatis.cache.impl.PerpetualCache;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
-import org.apache.ibatis.mapping.CacheBuilder;
-import org.apache.ibatis.mapping.Discriminator;
-import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.ParameterMap;
-import org.apache.ibatis.mapping.ParameterMapping;
-import org.apache.ibatis.mapping.ParameterMode;
-import org.apache.ibatis.mapping.ResultFlag;
-import org.apache.ibatis.mapping.ResultMap;
-import org.apache.ibatis.mapping.ResultMapping;
-import org.apache.ibatis.mapping.ResultSetType;
-import org.apache.ibatis.mapping.SqlCommandType;
-import org.apache.ibatis.mapping.SqlSource;
-import org.apache.ibatis.mapping.StatementType;
+import org.apache.ibatis.mapping.*;
 import org.apache.ibatis.reflection.MetaClass;
 import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
+import java.util.*;
+
 /**
+ * Mapper 文件解析工具。生成元素对象并设置到全局配置中。
+ *
  * @author Clinton Begin
  */
 public class MapperBuilderAssistant extends BaseBuilder {
 
+  /**
+   * Mapper 文件对应的 namespace 名称
+   */
   private String currentNamespace;
+
+  /**
+   * 资源路径
+   */
   private final String resource;
+
+  /**
+   * 获取的缓存配置
+   */
   private Cache currentCache;
+
+  /**
+   * 获取缓存配置成功标志
+   */
   private boolean unresolvedCacheRef; // issue #676
 
   public MapperBuilderAssistant(Configuration configuration, String resource) {
@@ -68,6 +66,11 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return currentNamespace;
   }
 
+  /**
+   * 设置 Mapper 文件对应的 namespace 名称
+   *
+   * @param currentNamespace
+   */
   public void setCurrentNamespace(String currentNamespace) {
     if (currentNamespace == null) {
       throw new BuilderException("The mapper element requires a namespace attribute to be specified.");
@@ -102,12 +105,19 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return currentNamespace + "." + base;
   }
 
+  /**
+   * 获取指定 namespace 下的缓存配置
+   *
+   * @param namespace
+   * @return
+   */
   public Cache useCacheRef(String namespace) {
     if (namespace == null) {
       throw new BuilderException("cache-ref element requires a namespace attribute.");
     }
     try {
       unresolvedCacheRef = true;
+      // 从全局配置中获取缓存配置
       Cache cache = configuration.getCache(namespace);
       if (cache == null) {
         throw new IncompleteElementException("No cache for namespace '" + namespace + "' could be found.");
@@ -116,10 +126,23 @@ public class MapperBuilderAssistant extends BaseBuilder {
       unresolvedCacheRef = false;
       return cache;
     } catch (IllegalArgumentException e) {
+      // 可能指定引用的 namespace 缓存还未加载，抛出异常
       throw new IncompleteElementException("No cache for namespace '" + namespace + "' could be found.", e);
     }
   }
 
+  /**
+   * 创建缓存配置
+   *
+   * @param typeClass 基础缓存配置
+   * @param evictionClass 失效类型
+   * @param flushInterval 定时清理缓存时间间隔
+   * @param size 缓存项大小
+   * @param readWrite 是否将缓存系列化成二级制数据
+   * @param blocking 缓存不命中进入数据库查询时是否加锁（保证同一时刻相同缓存key只有一个线程执行数据库查询任务）
+   * @param props 自定义配置
+   * @return
+   */
   public Cache useNewCache(Class<? extends Cache> typeClass,
       Class<? extends Cache> evictionClass,
       Long flushInterval,
@@ -128,19 +151,34 @@ public class MapperBuilderAssistant extends BaseBuilder {
       boolean blocking,
       Properties props) {
     Cache cache = new CacheBuilder(currentNamespace)
+            // 基础缓存配置
         .implementation(valueOrDefault(typeClass, PerpetualCache.class))
+            // 失效类型，默认 LRU
         .addDecorator(valueOrDefault(evictionClass, LruCache.class))
+            // 定时清理缓存时间间隔
         .clearInterval(flushInterval)
+            // 缓存项大小
         .size(size)
+            // 是否将缓存系列化成二级制数据
         .readWrite(readWrite)
+            // 缓存不命中进入数据库查询时是否加锁（保证同一时刻相同缓存key只有一个线程执行数据库查询任务）
         .blocking(blocking)
         .properties(props)
         .build();
+    // 设置到全局配置中
     configuration.addCache(cache);
     currentCache = cache;
     return cache;
   }
 
+  /**
+   * 创建参数表并设置到全局配置中
+   *
+   * @param id
+   * @param parameterClass
+   * @param parameterMappings
+   * @return
+   */
   public ParameterMap addParameterMap(String id, Class<?> parameterClass, List<ParameterMapping> parameterMappings) {
     id = applyCurrentNamespace(id, false);
     ParameterMap parameterMap = new ParameterMap.Builder(configuration, id, parameterClass, parameterMappings).build();
@@ -148,6 +186,19 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return parameterMap;
   }
 
+  /**
+   * 创建参数映射对象
+   *
+   * @param parameterType
+   * @param property
+   * @param javaType
+   * @param jdbcType
+   * @param resultMap
+   * @param parameterMode
+   * @param typeHandler
+   * @param numericScale
+   * @return
+   */
   public ParameterMapping buildParameterMapping(
       Class<?> parameterType,
       String property,
@@ -157,10 +208,13 @@ public class MapperBuilderAssistant extends BaseBuilder {
       ParameterMode parameterMode,
       Class<? extends TypeHandler<?>> typeHandler,
       Integer numericScale) {
+    // 获取 resultMap 全名
     resultMap = applyCurrentNamespace(resultMap, true);
 
     // Class parameterType = parameterMapBuilder.type();
+    // 获取 java 类型类对象
     Class<?> javaTypeClass = resolveParameterJavaType(parameterType, property, javaType, jdbcType);
+    // 获取类型转换器对象
     TypeHandler<?> typeHandlerInstance = resolveTypeHandler(javaTypeClass, typeHandler);
 
     return new ParameterMapping.Builder(configuration, property, javaTypeClass)
@@ -172,6 +226,9 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .build();
   }
 
+  /**
+   * 创建 resultMap
+   */
   public ResultMap addResultMap(
       String id,
       Class<?> type,
@@ -186,6 +243,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
       if (!configuration.hasResultMap(extend)) {
         throw new IncompleteElementException("Could not find a parent resultmap with id '" + extend + "'");
       }
+      // 获取继承的 ResultMap 对象
       ResultMap resultMap = configuration.getResultMap(extend);
       List<ResultMapping> extendedResultMappings = new ArrayList<>(resultMap.getResultMappings());
       extendedResultMappings.removeAll(resultMappings);
@@ -193,11 +251,13 @@ public class MapperBuilderAssistant extends BaseBuilder {
       boolean declaresConstructor = false;
       for (ResultMapping resultMapping : resultMappings) {
         if (resultMapping.getFlags().contains(ResultFlag.CONSTRUCTOR)) {
+          // 当前 resultMap 指定了构造方法
           declaresConstructor = true;
           break;
         }
       }
       if (declaresConstructor) {
+        // 移除继承的 ResultMap 的构造器映射对象
         extendedResultMappings.removeIf(resultMapping -> resultMapping.getFlags().contains(ResultFlag.CONSTRUCTOR));
       }
       resultMappings.addAll(extendedResultMappings);
@@ -352,6 +412,9 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return resultMaps;
   }
 
+  /**
+   * 创建返回值映射对象
+   */
   public ResultMapping buildResultMapping(
       Class<?> resultType,
       String property,

@@ -15,10 +15,6 @@
  */
 package org.apache.ibatis.builder.annotation;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Map;
-
 import org.apache.ibatis.annotations.Lang;
 import org.apache.ibatis.builder.BuilderException;
 import org.apache.ibatis.mapping.BoundSql;
@@ -26,6 +22,10 @@ import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.reflection.ParamNameResolver;
 import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Map;
 
 /**
  * @author Clinton Begin
@@ -57,9 +57,12 @@ public class ProviderSqlSource implements SqlSource {
     String providerMethodName;
     try {
       this.configuration = configuration;
+      // 获取语法驱动类型
       Lang lang = mapperMethod == null ? null : mapperMethod.getAnnotation(Lang.class);
       this.languageDriver = configuration.getLanguageDriver(lang == null ? null : lang.value());
+      // provider 注解类型
       this.providerType = (Class<?>) provider.getClass().getMethod("type").invoke(provider);
+      // 引用的 provider 方法名
       providerMethodName = (String) provider.getClass().getMethod("method").invoke(provider);
 
       if (providerMethodName.length() == 0 && ProviderMethodResolver.class.isAssignableFrom(this.providerType)) {

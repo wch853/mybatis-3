@@ -16,8 +16,19 @@
 package org.apache.ibatis.mapping;
 
 /**
+ * resultMap 特殊元素标志
+ *
  * @author Clinton Begin
  */
 public enum ResultFlag {
-  ID, CONSTRUCTOR
+
+  /**
+   * id 元素
+   */
+  ID,
+
+  /**
+   * constructor 元素
+   */
+  CONSTRUCTOR
 }

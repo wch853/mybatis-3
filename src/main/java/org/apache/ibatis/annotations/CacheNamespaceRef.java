@@ -26,6 +26,9 @@ import java.lang.annotation.Target;
  * <p>
  * If you use this annotation, should be specified either {@link #value()} or {@link #name()} attribute.
  * </p>
+ *
+ * 缓存引用配置，通过被引用缓存配置的 namespace 名或对应类名获取
+ *
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */

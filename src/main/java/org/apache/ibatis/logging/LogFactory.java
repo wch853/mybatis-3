@@ -73,6 +73,11 @@ public final class LogFactory {
     }
   }
 
+  /**
+   * 使用自定义日志实现覆盖
+   *
+   * @param clazz
+   */
   public static synchronized void useCustomLogging(Class<? extends Log> clazz) {
     setImplementation(clazz);
   }

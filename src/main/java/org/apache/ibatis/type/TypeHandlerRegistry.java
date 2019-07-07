@@ -190,6 +190,12 @@ public final class TypeHandlerRegistry {
     return javaTypeReference != null && getTypeHandler(javaTypeReference, jdbcType) != null;
   }
 
+  /**
+   * 获取 TypeHandler 对象
+   *
+   * @param handlerType
+   * @return
+   */
   public TypeHandler<?> getMappingTypeHandler(Class<? extends TypeHandler<?>> handlerType) {
     return allTypeHandlersMap.get(handlerType);
   }

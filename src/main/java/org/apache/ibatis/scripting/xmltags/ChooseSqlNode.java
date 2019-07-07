@@ -18,6 +18,8 @@ package org.apache.ibatis.scripting.xmltags;
 import java.util.List;
 
 /**
+ * choose sql 节点
+ *
  * @author Clinton Begin
  */
 public class ChooseSqlNode implements SqlNode {
@@ -31,11 +33,14 @@ public class ChooseSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // when 节点根据 test 表达式判断是否生效
     for (SqlNode sqlNode : ifSqlNodes) {
       if (sqlNode.apply(context)) {
         return true;
       }
     }
+
+    // when 节点如果都未生效，且存在 otherwise 节点，则使用 otherwise 节点
     if (defaultSqlNode != null) {
       defaultSqlNode.apply(context);
       return true;

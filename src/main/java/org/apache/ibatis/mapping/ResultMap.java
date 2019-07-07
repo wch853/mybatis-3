@@ -15,15 +15,6 @@
  */
 package org.apache.ibatis.mapping;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.builder.BuilderException;
 import org.apache.ibatis.logging.Log;
@@ -31,23 +22,80 @@ import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.reflection.ParamNameUtil;
 import org.apache.ibatis.session.Configuration;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.util.*;
+
 /**
+ * 返回值映射
+ *
  * @author Clinton Begin
  */
 public class ResultMap {
+
+  /**
+   * 全局配置
+   */
   private Configuration configuration;
 
+  /**
+   * resultMap id
+   */
   private String id;
+
+  /**
+   * 返回值类型
+   */
   private Class<?> type;
+
+  /**
+   * 除 discriminator 元素外的其它映射关系
+   */
   private List<ResultMapping> resultMappings;
+
+  /**
+   * id 元素 和 idArg 元素的映射关系
+   */
   private List<ResultMapping> idResultMappings;
+
+  /**
+   * constructor 元素的映射关系
+   */
   private List<ResultMapping> constructorResultMappings;
+
+  /**
+   * 除了 constructor 元素的映射关系
+   */
   private List<ResultMapping> propertyResultMappings;
+
+  /**
+   * column 属性名集合
+   */
   private Set<String> mappedColumns;
+
+  /**
+   * property 属性名集合
+   */
   private Set<String> mappedProperties;
+
+  /**
+   * 鉴别器
+   */
   private Discriminator discriminator;
+
+  /**
+   * 是否有嵌套的 resultMap
+   */
   private boolean hasNestedResultMaps;
+
+  /**
+   * 是否有嵌套的 select
+   */
   private boolean hasNestedQueries;
+
+  /**
+   * 是否自动映射
+   */
   private Boolean autoMapping;
 
   private ResultMap() {
@@ -90,8 +138,11 @@ public class ResultMap {
       resultMap.propertyResultMappings = new ArrayList<>();
       final List<String> constructorArgNames = new ArrayList<>();
       for (ResultMapping resultMapping : resultMap.resultMappings) {
+        // 是否有嵌套子查询
         resultMap.hasNestedQueries = resultMap.hasNestedQueries || resultMapping.getNestedQueryId() != null;
+        // 是否有嵌套的 resultMap
         resultMap.hasNestedResultMaps = resultMap.hasNestedResultMaps || (resultMapping.getNestedResultMapId() != null && resultMapping.getResultSet() == null);
+        // 列名
         final String column = resultMapping.getColumn();
         if (column != null) {
           resultMap.mappedColumns.add(column.toUpperCase(Locale.ENGLISH));

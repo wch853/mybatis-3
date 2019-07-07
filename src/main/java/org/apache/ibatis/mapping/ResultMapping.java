@@ -15,35 +15,84 @@
  */
 package org.apache.ibatis.mapping;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 /**
+ * 返回值字段映射关系对象
+ *
  * @author Clinton Begin
  */
 public class ResultMapping {
 
+  /**
+   * 全局配置
+   */
   private Configuration configuration;
+
+  /**
+   * 字段名
+   */
   private String property;
+
+  /**
+   * 列名
+   */
   private String column;
+
+  /**
+   * 字段类型
+   */
   private Class<?> javaType;
+
+  /**
+   * 列 JDBC 类型
+   */
   private JdbcType jdbcType;
+
+  /**
+   * 类型转换器
+   */
   private TypeHandler<?> typeHandler;
+
+  /**
+   * 字段对应的嵌套的 resultMap id
+   */
   private String nestedResultMapId;
+
+  /**
+   * 字段对应 select 属性（嵌套查询）的 id
+   */
   private String nestedQueryId;
+
+  /**
+   * 指定不为空才创建子对象的列
+   */
   private Set<String> notNullColumns;
+
+  /**
+   * 列名与与字段名不一致，使用列名前缀
+   */
   private String columnPrefix;
+
+  /**
+   * 处理标志：id / constructor
+   */
   private List<ResultFlag> flags;
   private List<ResultMapping> composites;
   private String resultSet;
   private String foreignColumn;
+
+  /**
+   * 是否延迟加载
+   */
   private boolean lazy;
 
   ResultMapping() {

@@ -15,18 +15,31 @@
  */
 package org.apache.ibatis.mapping;
 
+import org.apache.ibatis.session.Configuration;
+
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.ibatis.session.Configuration;
-
 /**
+ * 参数表
+ *
  * @author Clinton Begin
  */
 public class ParameterMap {
 
+  /**
+   * ParameterMap 全名
+   */
   private String id;
+
+  /**
+   * 参数类对象
+   */
   private Class<?> type;
+
+  /**
+   * 参数映射对象
+   */
   private List<ParameterMapping> parameterMappings;
 
   private ParameterMap() {

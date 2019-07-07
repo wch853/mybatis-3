@@ -32,7 +32,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * This way, other threads will wait until this element is filled instead of hitting the database.
  *
  * 缓存阻塞装饰器。
- * 获取缓存时对 key 加锁，直到写缓存后释放锁，保证相同 key 只有一个线程执行数据库操作，其它线程在缓存层阻塞。
+ * 获取缓存时对 key 加锁，直到写缓存后释放锁，保证相同 key 同一时刻只有一个线程执行数据库操作，其它线程在缓存层阻塞。
  *
  * @author Eduardo Macarron
  *

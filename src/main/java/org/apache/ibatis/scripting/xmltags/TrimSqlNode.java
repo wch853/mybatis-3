@@ -15,16 +15,13 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.StringTokenizer;
-
 import org.apache.ibatis.session.Configuration;
 
+import java.util.*;
+
 /**
+ * trim sql 节点
+ *
  * @author Clinton Begin
  */
 public class TrimSqlNode implements SqlNode {
@@ -53,15 +50,18 @@ public class TrimSqlNode implements SqlNode {
   public boolean apply(DynamicContext context) {
     FilteredDynamicContext filteredDynamicContext = new FilteredDynamicContext(context);
     boolean result = contents.apply(filteredDynamicContext);
+    // 加上前缀和和后缀，并去除多余字段
     filteredDynamicContext.applyAll();
     return result;
   }
 
   private static List<String> parseOverrides(String overrides) {
     if (overrides != null) {
+      // 解析 token，按 | 分隔
       final StringTokenizer parser = new StringTokenizer(overrides, "|", false);
       final List<String> list = new ArrayList<>(parser.countTokens());
       while (parser.hasMoreTokens()) {
+        // 保存为字符串集合
         list.add(parser.nextToken().toUpperCase(Locale.ENGLISH));
       }
       return list;
@@ -87,6 +87,7 @@ public class TrimSqlNode implements SqlNode {
       sqlBuffer = new StringBuilder(sqlBuffer.toString().trim());
       String trimmedUppercaseSql = sqlBuffer.toString().toUpperCase(Locale.ENGLISH);
       if (trimmedUppercaseSql.length() > 0) {
+        // 加上前缀和和后缀，并去除多余字段
         applyPrefix(sqlBuffer, trimmedUppercaseSql);
         applySuffix(sqlBuffer, trimmedUppercaseSql);
       }
@@ -122,6 +123,7 @@ public class TrimSqlNode implements SqlNode {
       if (!prefixApplied) {
         prefixApplied = true;
         if (prefixesToOverride != null) {
+          // 文本最前去除多余字段
           for (String toRemove : prefixesToOverride) {
             if (trimmedUppercaseSql.startsWith(toRemove)) {
               sql.delete(0, toRemove.trim().length());
@@ -129,6 +131,7 @@ public class TrimSqlNode implements SqlNode {
             }
           }
         }
+        // 在文本最前插入前缀和空格
         if (prefix != null) {
           sql.insert(0, " ");
           sql.insert(0, prefix);
@@ -140,6 +143,7 @@ public class TrimSqlNode implements SqlNode {
       if (!suffixApplied) {
         suffixApplied = true;
         if (suffixesToOverride != null) {
+          // 文本最后去除多余字段
           for (String toRemove : suffixesToOverride) {
             if (trimmedUppercaseSql.endsWith(toRemove) || trimmedUppercaseSql.endsWith(toRemove.trim())) {
               int start = sql.length() - toRemove.trim().length();
@@ -149,6 +153,7 @@ public class TrimSqlNode implements SqlNode {
             }
           }
         }
+        // 文本最后插入空格和后缀
         if (suffix != null) {
           sql.append(" ");
           sql.append(suffix);

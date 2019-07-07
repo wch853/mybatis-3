@@ -16,8 +16,23 @@
 package org.apache.ibatis.mapping;
 
 /**
+ * sql statement 类型枚举，包括 sql、预编译 sql 和存储过程类型
  * @author Clinton Begin
  */
 public enum StatementType {
-  STATEMENT, PREPARED, CALLABLE
+
+  /**
+   * SQL
+   */
+  STATEMENT,
+
+  /**
+   * 预编译 SQL
+   */
+  PREPARED,
+
+  /**
+   * 存储过程
+   */
+  CALLABLE
 }

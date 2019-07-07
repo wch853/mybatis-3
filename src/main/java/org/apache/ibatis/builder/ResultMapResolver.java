@@ -15,13 +15,15 @@
  */
 package org.apache.ibatis.builder;
 
-import java.util.List;
-
 import org.apache.ibatis.mapping.Discriminator;
 import org.apache.ibatis.mapping.ResultMap;
 import org.apache.ibatis.mapping.ResultMapping;
 
+import java.util.List;
+
 /**
+ * ResultMap 解析器
+ *
  * @author Eduardo Macarron
  */
 public class ResultMapResolver {

@@ -16,6 +16,8 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
+ * 保存 sql 节点内容和 test 表达式
+ *
  * @author Clinton Begin
  */
 public class IfSqlNode implements SqlNode {
@@ -31,6 +33,7 @@ public class IfSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 根据 test 表达式判断当前节点是否生效
     if (evaluator.evaluateBoolean(test, context.getBindings())) {
       contents.apply(context);
       return true;

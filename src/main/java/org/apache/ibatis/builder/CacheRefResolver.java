@@ -18,6 +18,8 @@ package org.apache.ibatis.builder;
 import org.apache.ibatis.cache.Cache;
 
 /**
+ * 缓存引用配置解析器，应用其它命名空间缓存配置到当前命名空间下
+ *
  * @author Clinton Begin
  */
 public class CacheRefResolver {
@@ -29,6 +31,11 @@ public class CacheRefResolver {
     this.cacheRefNamespace = cacheRefNamespace;
   }
 
+  /**
+   * 获取引用缓存配置
+   *
+   * @return
+   */
   public Cache resolveCacheRef() {
     return assistant.useCacheRef(cacheRefNamespace);
   }

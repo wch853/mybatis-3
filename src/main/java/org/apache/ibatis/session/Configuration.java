@@ -15,18 +15,6 @@
  */
 package org.apache.ibatis.session;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.function.BiFunction;
-
 import org.apache.ibatis.binding.MapperRegistry;
 import org.apache.ibatis.builder.CacheRefResolver;
 import org.apache.ibatis.builder.IncompleteElementException;
@@ -42,11 +30,7 @@ import org.apache.ibatis.cache.impl.PerpetualCache;
 import org.apache.ibatis.datasource.jndi.JndiDataSourceFactory;
 import org.apache.ibatis.datasource.pooled.PooledDataSourceFactory;
 import org.apache.ibatis.datasource.unpooled.UnpooledDataSourceFactory;
-import org.apache.ibatis.executor.BatchExecutor;
-import org.apache.ibatis.executor.CachingExecutor;
-import org.apache.ibatis.executor.Executor;
-import org.apache.ibatis.executor.ReuseExecutor;
-import org.apache.ibatis.executor.SimpleExecutor;
+import org.apache.ibatis.executor.*;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
 import org.apache.ibatis.executor.loader.ProxyFactory;
 import org.apache.ibatis.executor.loader.cglib.CglibProxyFactory;
@@ -66,12 +50,7 @@ import org.apache.ibatis.logging.log4j2.Log4j2Impl;
 import org.apache.ibatis.logging.nologging.NoLoggingImpl;
 import org.apache.ibatis.logging.slf4j.Slf4jImpl;
 import org.apache.ibatis.logging.stdout.StdOutImpl;
-import org.apache.ibatis.mapping.BoundSql;
-import org.apache.ibatis.mapping.Environment;
-import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.ParameterMap;
-import org.apache.ibatis.mapping.ResultMap;
-import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
+import org.apache.ibatis.mapping.*;
 import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.plugin.InterceptorChain;
@@ -94,80 +73,261 @@ import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.util.*;
+import java.util.function.BiFunction;
+
 /**
+ * MyBatis 全局配置，包括运行行为、类型容器、别名容器、注册 `Mapper`、注册 `statement` 等。
+ *
  * @author Clinton Begin
  */
 public class Configuration {
 
+  /**
+   * 环境配置
+   */
   protected Environment environment;
 
+  /**
+   * 是否允许在嵌套语句中使用分页，true 为允许
+   */
   protected boolean safeRowBoundsEnabled;
   protected boolean safeResultHandlerEnabled = true;
+
+  /**
+   * 是否开启自动驼峰命名规则
+   */
   protected boolean mapUnderscoreToCamelCase;
+
+  /**
+   * 延迟加载全局开关
+   */
+  protected boolean lazyLoadingEnabled = false;
+
+  /**
+   * true：加载关联的全部属性；false：按需加载
+   */
   protected boolean aggressiveLazyLoading;
+
+  /**
+   * 是否允许单一语句返回多结果集
+   */
   protected boolean multipleResultSetsEnabled = true;
+
+  /**
+   * 允许 JDBC 支持自动生成主键
+   */
   protected boolean useGeneratedKeys;
+
+  /**
+   * 使用列别名代替列名
+   */
   protected boolean useColumnLabel = true;
+
+  /**
+   * 全局地开启或关闭配置文件中的所有映射器已经配置的任何缓存
+   */
   protected boolean cacheEnabled = true;
+
+  /**
+   * 结果集中的值为 null 时是否赋值
+   */
   protected boolean callSettersOnNulls;
+
+  /**
+   * 允许使用方法签名中的名称作为语句参数名称
+   */
   protected boolean useActualParamName = true;
+
+  /**
+   * 返回空行是否创建实例
+   */
   protected boolean returnInstanceForEmptyRow;
 
+  /**
+   * 指定日志前缀
+   */
   protected String logPrefix;
+
+  /**
+   * 指定第三方日志实现
+   */
   protected Class<? extends Log> logImpl;
+
+  /**
+   * 指定虚拟文件系统实现
+   */
   protected Class<? extends VFS> vfsImpl;
+
+  /**
+   * 本地缓存作用域
+   * SESSION：缓存一个会话中执行的所有查询
+   * STATEMENT：本地会话仅用在语句执行上，对相同 SqlSession 的不同调用将不会共享数据
+   */
   protected LocalCacheScope localCacheScope = LocalCacheScope.SESSION;
+
+  /**
+   * 没用指定 JDBC 类型的 NULL 值指定默认类型
+   */
   protected JdbcType jdbcTypeForNull = JdbcType.OTHER;
+
+  /**
+   * 可触发延迟加载的方法名称列表
+   */
   protected Set<String> lazyLoadTriggerMethods = new HashSet<>(Arrays.asList("equals", "clone", "hashCode", "toString"));
+
+  /**
+   * 驱动等待数据库响应的超时时间
+   */
   protected Integer defaultStatementTimeout;
+
+  /**
+   * 为驱动的结果集获取数量（fetchSize）设置一个提示值
+   */
   protected Integer defaultFetchSize;
+
+  /**
+   * 执行器类型
+   */
   protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;
+
+  /**
+   * 指定 MyBatis 应如何自动映射列到字段或属性
+   */
   protected AutoMappingBehavior autoMappingBehavior = AutoMappingBehavior.PARTIAL;
+
+  /**
+   * 指定发现自动映射目标未知列（或者未知属性类型）的行为
+   */
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
 
+  /**
+   * 额外配置属性
+   */
   protected Properties variables = new Properties();
+
+  /**
+   * 反射信息工厂
+   */
   protected ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
+
+  /**
+   * 对象创建工厂
+   */
   protected ObjectFactory objectFactory = new DefaultObjectFactory();
+
+  /**
+   * 对象包装工厂
+   */
   protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
 
-  protected boolean lazyLoadingEnabled = false;
+  /**
+   * 代理工厂
+   */
   protected ProxyFactory proxyFactory = new JavassistProxyFactory(); // #224 Using internal Javassist instead of OGNL
 
+  /**
+   * 数据库厂商标识
+   */
   protected String databaseId;
+
   /**
    * Configuration factory class.
    * Used to create Configuration for loading deserialized unread properties.
+   * 指定一个提供 Configuration 实例的类
    *
    * @see <a href='https://code.google.com/p/mybatis/issues/detail?id=300'>Issue 300 (google code)</a>
    */
   protected Class<?> configurationFactory;
 
+  /**
+   * Mapper 接口注册器
+   */
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
+
+  /**
+   * 拦截器链
+   */
   protected final InterceptorChain interceptorChain = new InterceptorChain();
+
+  /**
+   * 类型转换器注册类
+   */
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
+
+  /**
+   * 别名转换器注册类
+   */
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
+
+  /**
+   * 配置注册
+   */
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
+  /**
+   * statement id - 映射 statement SQL
+   */
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
+
+  /**
+   * namespace - 缓存配置
+   */
   protected final Map<String, Cache> caches = new StrictMap<>("Caches collection");
+
+  /**
+   * map id - ResultMap 配置
+   */
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
+
+  /**
+   * map id - ParameterMap 配置
+   */
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
+
+  /**
+   * id - KeyGenerator 配置
+   */
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
 
+  /**
+   * 已加载的 Mapper 文件集合
+   */
   protected final Set<String> loadedResources = new HashSet<>();
+
+  /**
+   * id - sql 片段
+   */
   protected final Map<String, XNode> sqlFragments = new StrictMap<>("XML fragments parsed from previous mappers");
 
+  /**
+   * 暂时未获得引用 statement id 对应配置的 statement 处理器
+   */
   protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<>();
+
+  /**
+   * 暂时未获得引用 namespace 缓存配置的解析器
+   */
   protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<>();
+
+  /**
+   * 暂时未获得引用 ResultMap 的 ResultMap 解析器
+   */
   protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<>();
+
+  /**
+   * 注册配置根据方法名获取 statement id
+   */
   protected final Collection<MethodResolver> incompleteMethods = new LinkedList<>();
 
-  /*
+  /**
    * A map holds cache-ref relationship. The key is the namespace that
    * references a cache bound to another namespace and the value is the
    * namespace which the actual cache is bound to.
+   *
+   * Mapper 文件对应的 namespace - 引用缓存配置的 namespace
    */
   protected final Map<String, String> cacheRefMap = new HashMap<>();
 
@@ -884,9 +1044,18 @@ public class Configuration {
     }
   }
 
+  /**
+   * 封装 HashMap，对键值存取有严格要求。
+   *
+   * @param <V>
+   */
   protected static class StrictMap<V> extends HashMap<String, V> {
 
     private static final long serialVersionUID = -4950446264854982944L;
+
+    /**
+     * Map 名称
+     */
     private final String name;
     private BiFunction<V, V, String> conflictMessageProducer;
 
@@ -923,14 +1092,20 @@ public class Configuration {
       return this;
     }
 
+    /**
+     * 不允许添加重复 key
+     */
     @SuppressWarnings("unchecked")
     public V put(String key, V value) {
       if (containsKey(key)) {
+        // 重复 key 异常
         throw new IllegalArgumentException(name + " already contains value for " + key
             + (conflictMessageProducer == null ? "" : conflictMessageProducer.apply(super.get(key), value)));
       }
       if (key.contains(".")) {
+        // 获取最后一个 . 后的部分作为 shortKey
         final String shortKey = getShortName(key);
+        // shortKey 不允许重复，否则在获取时异常
         if (super.get(shortKey) == null) {
           super.put(shortKey, value);
         } else {
@@ -940,11 +1115,16 @@ public class Configuration {
       return super.put(key, value);
     }
 
+    /**
+     * 不允许没有对应的 key，也不许使用重复的 key
+     */
     public V get(Object key) {
       V value = super.get(key);
       if (value == null) {
+        // key 不存在抛异常
         throw new IllegalArgumentException(name + " does not contain value for " + key);
       }
+      // 重复的 key 抛异常
       if (value instanceof Ambiguity) {
         throw new IllegalArgumentException(((Ambiguity) value).getSubject() + " is ambiguous in " + name
             + " (try using the full name including the namespace, or rename one of the entries)");

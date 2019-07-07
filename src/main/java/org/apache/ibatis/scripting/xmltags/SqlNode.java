@@ -16,8 +16,17 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
+ * sql 节点抽象接口
+ *
  * @author Clinton Begin
  */
 public interface SqlNode {
+
+  /**
+   * 判断当前 sql 节点是否可以加入到生效的 sql 语句中
+   *
+   * @param context
+   * @return
+   */
   boolean apply(DynamicContext context);
 }

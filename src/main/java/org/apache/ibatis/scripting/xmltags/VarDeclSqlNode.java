@@ -16,6 +16,8 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
+ * 解析使用 ognl 表达式的 sql 节点
+ *
  * @author Frank D. Martinez [mnesarco]
  */
 public class VarDeclSqlNode implements SqlNode {
@@ -30,7 +32,9 @@ public class VarDeclSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 解析 ognl 表达式
     final Object value = OgnlCache.getValue(expression, context.getBindings());
+    // 绑定参数
     context.bind(name, value);
     return true;
   }

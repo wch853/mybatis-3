@@ -15,10 +15,6 @@
  */
 package org.apache.ibatis.builder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.ibatis.mapping.ParameterMapping;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.parsing.GenericTokenParser;
@@ -28,7 +24,13 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 /**
+ * 解析 #{} 类型 token 并绑定参数对象
+ *
  * @author Clinton Begin
  */
 public class SqlSourceBuilder extends BaseBuilder {
@@ -41,8 +43,11 @@ public class SqlSourceBuilder extends BaseBuilder {
 
   public SqlSource parse(String originalSql, Class<?> parameterType, Map<String, Object> additionalParameters) {
     ParameterMappingTokenHandler handler = new ParameterMappingTokenHandler(configuration, parameterType, additionalParameters);
+    // 创建 #{} 类型 token 搜索对象
     GenericTokenParser parser = new GenericTokenParser("#{", "}", handler);
+    // 解析 token
     String sql = parser.parse(originalSql);
+    // 创建静态 sql 生成对象，并绑定参数
     return new StaticSqlSource(configuration, sql, handler.getParameterMappings());
   }
 
@@ -62,15 +67,24 @@ public class SqlSourceBuilder extends BaseBuilder {
       return parameterMappings;
     }
 
+    /**
+     * 处理 #{} 类型 token
+     * @param content 待解析 token
+     * @return
+     */
     @Override
     public String handleToken(String content) {
+      // 创建参数映射对象
       parameterMappings.add(buildParameterMapping(content));
+      // 将表达式转为预编译 sql 占位符
       return "?";
     }
 
     private ParameterMapping buildParameterMapping(String content) {
       Map<String, String> propertiesMap = parseParameterMapping(content);
+      // 参数属性名
       String property = propertiesMap.get("property");
+      // 参数类型
       Class<?> propertyType;
       if (metaParameters.hasGetter(property)) { // issue #448 get type from additional params
         propertyType = metaParameters.getGetterType(property);

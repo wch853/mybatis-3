@@ -15,16 +15,17 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
+import ognl.Ognl;
+import ognl.OgnlException;
+import org.apache.ibatis.builder.BuilderException;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import ognl.Ognl;
-import ognl.OgnlException;
-
-import org.apache.ibatis.builder.BuilderException;
-
 /**
  * Caches OGNL parsed expressions.
+ *
+ * ognl 缓存工具
  *
  * @author Eduardo Macarron
  *
@@ -34,12 +35,23 @@ public final class OgnlCache {
 
   private static final OgnlMemberAccess MEMBER_ACCESS = new OgnlMemberAccess();
   private static final OgnlClassResolver CLASS_RESOLVER = new OgnlClassResolver();
+
+  /**
+   * ognl 表达式 - ognl 对象缓存
+   */
   private static final Map<String, Object> expressionCache = new ConcurrentHashMap<>();
 
   private OgnlCache() {
     // Prevent Instantiation of Static Class
   }
 
+  /**
+   * 根据 ognl 表达式和参数计算值
+   *
+   * @param expression
+   * @param root
+   * @return
+   */
   public static Object getValue(String expression, Object root) {
     try {
       Map context = Ognl.createDefaultContext(root, MEMBER_ACCESS, CLASS_RESOLVER, null);
@@ -49,10 +61,19 @@ public final class OgnlCache {
     }
   }
 
+  /**
+   * 编译 ognl 表达式并放入缓存
+   *
+   * @param expression
+   * @return
+   * @throws OgnlException
+   */
   private static Object parseExpression(String expression) throws OgnlException {
     Object node = expressionCache.get(expression);
     if (node == null) {
+      // 编译 ognl 表达式
       node = Ognl.parseExpression(expression);
+      // 放入缓存
       expressionCache.put(expression, node);
     }
     return node;
