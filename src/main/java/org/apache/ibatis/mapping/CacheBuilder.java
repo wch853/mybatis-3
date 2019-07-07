@@ -15,36 +15,62 @@
  */
 package org.apache.ibatis.mapping;
 
+import org.apache.ibatis.builder.InitializingObject;
+import org.apache.ibatis.cache.Cache;
+import org.apache.ibatis.cache.CacheException;
+import org.apache.ibatis.cache.decorators.*;
+import org.apache.ibatis.cache.impl.PerpetualCache;
+import org.apache.ibatis.reflection.MetaObject;
+import org.apache.ibatis.reflection.SystemMetaObject;
+
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.ibatis.builder.InitializingObject;
-import org.apache.ibatis.cache.Cache;
-import org.apache.ibatis.cache.CacheException;
-import org.apache.ibatis.cache.decorators.BlockingCache;
-import org.apache.ibatis.cache.decorators.LoggingCache;
-import org.apache.ibatis.cache.decorators.LruCache;
-import org.apache.ibatis.cache.decorators.ScheduledCache;
-import org.apache.ibatis.cache.decorators.SerializedCache;
-import org.apache.ibatis.cache.decorators.SynchronizedCache;
-import org.apache.ibatis.cache.impl.PerpetualCache;
-import org.apache.ibatis.reflection.MetaObject;
-import org.apache.ibatis.reflection.SystemMetaObject;
-
 /**
+ * 缓存实例创建工具
+ *
  * @author Clinton Begin
  */
 public class CacheBuilder {
+
+  /**
+   * namespace
+   */
   private final String id;
+
+  /**
+   * 缓存基础实现
+   */
   private Class<? extends Cache> implementation;
+
+  /**
+   * 使用的缓存装饰器
+   */
   private final List<Class<? extends Cache>> decorators;
+
+  /**
+   * 缓存项大小
+   */
   private Integer size;
+
+  /**
+   * 清理缓存时间间隔
+   */
   private Long clearInterval;
+
+  /**
+   * 是否将缓存系列化成二级制数据
+   */
   private boolean readWrite;
+
   private Properties properties;
+
+  /**
+   * 缓存不命中进入数据库查询时是否加锁（保证同一时刻相同缓存key只有一个线程执行数据库查询任务）
+   */
   private boolean blocking;
 
   public CacheBuilder(String id) {
@@ -89,8 +115,15 @@ public class CacheBuilder {
     return this;
   }
 
+  /**
+   * 创建缓存配置对象
+   *
+   * @return
+   */
   public Cache build() {
+    // 默认配置
     setDefaultImplementations();
+    // 加载缓存类型并创建实例
     Cache cache = newBaseCacheInstance(implementation, id);
     setCacheProperties(cache);
     // issue #352, do not apply decorators to custom caches
@@ -106,6 +139,9 @@ public class CacheBuilder {
     return cache;
   }
 
+  /**
+   * 缓存配置配置
+   */
   private void setDefaultImplementations() {
     if (implementation == null) {
       implementation = PerpetualCache.class;
@@ -115,6 +151,12 @@ public class CacheBuilder {
     }
   }
 
+  /**
+   * 配置缓存装饰器
+   *
+   * @param cache
+   * @return
+   */
   private Cache setStandardDecorators(Cache cache) {
     try {
       MetaObject metaCache = SystemMetaObject.forObject(cache);
@@ -186,6 +228,13 @@ public class CacheBuilder {
     }
   }
 
+  /**
+   * 加载缓存类型并创建实例
+   *
+   * @param cacheClass
+   * @param id
+   * @return
+   */
   private Cache newBaseCacheInstance(Class<? extends Cache> cacheClass, String id) {
     Constructor<? extends Cache> cacheConstructor = getBaseCacheConstructor(cacheClass);
     try {

@@ -15,18 +15,19 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
+import ognl.OgnlContext;
+import ognl.OgnlRuntime;
+import ognl.PropertyAccessor;
+import org.apache.ibatis.reflection.MetaObject;
+import org.apache.ibatis.session.Configuration;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
-import ognl.OgnlContext;
-import ognl.OgnlRuntime;
-import ognl.PropertyAccessor;
-
-import org.apache.ibatis.reflection.MetaObject;
-import org.apache.ibatis.session.Configuration;
-
 /**
+ * 动态 sql 上下文，用于保存绑定参数和生效 sql 节点
+ *
  * @author Clinton Begin
  */
 public class DynamicContext {
@@ -38,12 +39,21 @@ public class DynamicContext {
     OgnlRuntime.setPropertyAccessor(ContextMap.class, new ContextAccessor());
   }
 
+  /**
+   * 绑定参数容器
+   */
   private final ContextMap bindings;
+
+  /**
+   * 生效的 sql 部分，以空格相连
+   */
   private final StringJoiner sqlBuilder = new StringJoiner(" ");
+
   private int uniqueNumber = 0;
 
   public DynamicContext(Configuration configuration, Object parameterObject) {
     if (parameterObject != null && !(parameterObject instanceof Map)) {
+      // 获取参数对象类信息
       MetaObject metaObject = configuration.newMetaObject(parameterObject);
       bindings = new ContextMap(metaObject);
     } else {
@@ -73,9 +83,15 @@ public class DynamicContext {
     return uniqueNumber++;
   }
 
+  /**
+   * 参数绑定容器
+   */
   static class ContextMap extends HashMap<String, Object> {
     private static final long serialVersionUID = 2977601501966151582L;
 
+    /**
+     * 参数对象
+     */
     private MetaObject parameterMetaObject;
 
     public ContextMap(MetaObject parameterMetaObject) {
@@ -84,11 +100,13 @@ public class DynamicContext {
 
     @Override
     public Object get(Object key) {
+      // 先根据 key 查找原始容器
       String strKey = (String) key;
       if (super.containsKey(strKey)) {
         return super.get(strKey);
       }
 
+      // 再进入参数对象查找
       if (parameterMetaObject != null) {
         // issue #61 do not modify the context when reading
         return parameterMetaObject.getValue(strKey);
@@ -98,17 +116,23 @@ public class DynamicContext {
     }
   }
 
+  /**
+   * 参数访问工具
+   */
   static class ContextAccessor implements PropertyAccessor {
 
     @Override
     public Object getProperty(Map context, Object target, Object name) {
+      // 参数绑定容器
       Map map = (Map) target;
 
+      // 先根据 key 查找原始容器
       Object result = map.get(name);
       if (map.containsKey(name) || result != null) {
         return result;
       }
 
+      // 再进入参数对象查找
       Object parameterObject = map.get(PARAMETER_OBJECT_KEY);
       if (parameterObject instanceof Map) {
         return ((Map)parameterObject).get(name);

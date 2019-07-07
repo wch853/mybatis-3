@@ -15,14 +15,16 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
-import java.util.regex.Pattern;
-
 import org.apache.ibatis.parsing.GenericTokenParser;
 import org.apache.ibatis.parsing.TokenHandler;
 import org.apache.ibatis.scripting.ScriptingException;
 import org.apache.ibatis.type.SimpleTypeRegistry;
 
+import java.util.regex.Pattern;
+
 /**
+ * 文本 sql 节点。为包含 ${} 的 sql 节点提供处理工具。
+ *
  * @author Clinton Begin
  */
 public class TextSqlNode implements SqlNode {
@@ -38,6 +40,11 @@ public class TextSqlNode implements SqlNode {
     this.injectionFilter = injectionFilter;
   }
 
+  /**
+   * 是否为动态 sql，包含 ${} 占位符即为动态 sql
+   *
+   * @return
+   */
   public boolean isDynamic() {
     DynamicCheckerTokenParser checker = new DynamicCheckerTokenParser();
     GenericTokenParser parser = createParser(checker);
@@ -47,7 +54,9 @@ public class TextSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 搜索 ${} 类型 token 节点
     GenericTokenParser parser = createParser(new BindingTokenParser(context, injectionFilter));
+    // 解析 token 并追加解析后的文本到生效 sql 中
     context.appendSql(parser.parse(text));
     return true;
   }
@@ -68,12 +77,14 @@ public class TextSqlNode implements SqlNode {
 
     @Override
     public String handleToken(String content) {
+      // 获取绑定参数
       Object parameter = context.getBindings().get("_parameter");
       if (parameter == null) {
         context.getBindings().put("value", null);
       } else if (SimpleTypeRegistry.isSimpleType(parameter.getClass())) {
         context.getBindings().put("value", parameter);
       }
+      // 计算 ognl 表达式的值
       Object value = OgnlCache.getValue(content, context.getBindings());
       String srtValue = value == null ? "" : String.valueOf(value); // issue #274 return "" instead of "null"
       checkInjection(srtValue);
@@ -87,8 +98,14 @@ public class TextSqlNode implements SqlNode {
     }
   }
 
+  /**
+   * 判断 sql node 是否为动态 sql
+   */
   private static class DynamicCheckerTokenParser implements TokenHandler {
 
+    /**
+     * 是否为动态 sql，包含 ${} 占位符即为动态 sql
+     */
     private boolean isDynamic;
 
     public DynamicCheckerTokenParser() {

@@ -16,6 +16,8 @@
 package org.apache.ibatis.mapping;
 
 /**
+ * 存储过程参数类型
+ *
  * @author Clinton Begin
  */
 public enum ParameterMode {

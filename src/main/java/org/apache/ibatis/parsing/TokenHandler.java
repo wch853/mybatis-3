@@ -16,9 +16,18 @@
 package org.apache.ibatis.parsing;
 
 /**
+ * token 处理器抽象接口。定义 token 以何种方式被解析
+ *
  * @author Clinton Begin
  */
 public interface TokenHandler {
+
+  /**
+   * 对 token 进行解析
+   *
+   * @param content 待解析 token
+   * @return
+   */
   String handleToken(String content);
 }
 

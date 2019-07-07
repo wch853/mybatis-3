@@ -15,16 +15,15 @@
  */
 package org.apache.ibatis.mapping;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
-
-import javax.sql.DataSource;
-
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.logging.LogFactory;
 
 /**
  * Vendor DatabaseId provider.
@@ -35,12 +34,20 @@ import org.apache.ibatis.logging.LogFactory;
  * It can return null, if no database product name or
  * a properties was specified and no translation was found.
  *
+ * 根据数据源获取对应的厂商信息。
+ *
  * @author Eduardo Macarron
  */
 public class VendorDatabaseIdProvider implements DatabaseIdProvider {
 
   private Properties properties;
 
+  /**
+   * 根据数据源获取对应的厂商信息
+   *
+   * @param dataSource
+   * @return
+   */
   @Override
   public String getDatabaseId(DataSource dataSource) {
     if (dataSource == null) {
@@ -59,6 +66,13 @@ public class VendorDatabaseIdProvider implements DatabaseIdProvider {
     this.properties = p;
   }
 
+  /**
+   * 如果传入的属性配置包含当前数据库产品名，返回指定的值，否则返回数据库产品名
+   *
+   * @param dataSource
+   * @return
+   * @throws SQLException
+   */
   private String getDatabaseName(DataSource dataSource) throws SQLException {
     String productName = getDatabaseProductName(dataSource);
     if (this.properties != null) {
@@ -73,6 +87,13 @@ public class VendorDatabaseIdProvider implements DatabaseIdProvider {
     return productName;
   }
 
+  /**
+   * 获取数据库产品名
+   *
+   * @param dataSource
+   * @return
+   * @throws SQLException
+   */
   private String getDatabaseProductName(DataSource dataSource) throws SQLException {
     Connection con = null;
     try {

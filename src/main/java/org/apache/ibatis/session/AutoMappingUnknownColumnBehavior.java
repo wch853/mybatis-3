@@ -40,6 +40,7 @@ public enum AutoMappingUnknownColumnBehavior {
   /**
    * Output warning log.
    * Note: The log level of {@code 'org.apache.ibatis.session.AutoMappingUnknownColumnBehavior'} must be set to {@code WARN}.
+   * 输出提醒日志
    */
   WARNING {
     @Override
@@ -51,6 +52,7 @@ public enum AutoMappingUnknownColumnBehavior {
   /**
    * Fail mapping.
    * Note: throw {@link SqlSessionException}.
+   * 映射失败
    */
   FAILING {
     @Override

@@ -16,6 +16,8 @@
 package org.apache.ibatis.builder;
 
 /**
+ * 当前映射文件引用了其它命名空间下的配置，而该配置还未加载到全局配置中时会抛出此异常。
+ *
  * @author Eduardo Macarron
  */
 public class IncompleteElementException extends BuilderException {

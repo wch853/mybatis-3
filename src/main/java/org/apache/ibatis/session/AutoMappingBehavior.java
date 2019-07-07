@@ -24,16 +24,19 @@ public enum AutoMappingBehavior {
 
   /**
    * Disables auto-mapping.
+   * 取消自动映射
    */
   NONE,
 
   /**
    * Will only auto-map results with no nested result mappings defined inside.
+   * 自动映射没有定义嵌套结果集映射的结果集
    */
   PARTIAL,
 
   /**
    * Will auto-map result mappings of any complexity (containing nested or otherwise).
+   * 自动映射任意复杂的结果集
    */
   FULL
 }

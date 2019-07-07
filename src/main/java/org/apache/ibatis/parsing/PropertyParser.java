@@ -18,6 +18,8 @@ package org.apache.ibatis.parsing;
 import java.util.Properties;
 
 /**
+ * ${} 类型 token 解析器
+ *
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
@@ -50,15 +52,37 @@ public class PropertyParser {
     // Prevent Instantiation
   }
 
+  /**
+   * 对 ${} 类型 token 进行解析
+   *
+   * @param string
+   * @param variables
+   * @return
+   */
   public static String parse(String string, Properties variables) {
     VariableTokenHandler handler = new VariableTokenHandler(variables);
     GenericTokenParser parser = new GenericTokenParser("${", "}", handler);
     return parser.parse(string);
   }
 
+  /**
+   * 根据配置属性对 ${} token 进行解析
+   */
   private static class VariableTokenHandler implements TokenHandler {
+
+    /**
+     * 预先设置的属性
+     */
     private final Properties variables;
+
+    /**
+     * 是否运行使用默认值，默认为 false
+     */
     private final boolean enableDefaultValue;
+
+    /**
+     * 默认值分隔符号，即如待解析属性 ${key:default}，key 的默认值为 default
+     */
     private final String defaultValueSeparator;
 
     private VariableTokenHandler(Properties variables) {
@@ -76,6 +100,7 @@ public class PropertyParser {
       if (variables != null) {
         String key = content;
         if (enableDefaultValue) {
+          // 如待解析属性 ${key:default}，key 的默认值为 default
           final int separatorIndex = content.indexOf(defaultValueSeparator);
           String defaultValue = null;
           if (separatorIndex >= 0) {
@@ -83,13 +108,16 @@ public class PropertyParser {
             defaultValue = content.substring(separatorIndex + defaultValueSeparator.length());
           }
           if (defaultValue != null) {
+            // 使用默认值
             return variables.getProperty(key, defaultValue);
           }
         }
         if (variables.containsKey(key)) {
+          // 不使用默认值
           return variables.getProperty(key);
         }
       }
+      // 返回原文本
       return "${" + content + "}";
     }
   }

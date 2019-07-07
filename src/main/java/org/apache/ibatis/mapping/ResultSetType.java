@@ -18,17 +18,32 @@ package org.apache.ibatis.mapping;
 import java.sql.ResultSet;
 
 /**
+ * 结果集类型
+ *
  * @author Clinton Begin
  */
 public enum ResultSetType {
   /**
    * behavior with same as unset (driver dependent).
+   * 默认结果集，与未设置时效果一样
    *
    * @since 3.5.0
    */
   DEFAULT(-1),
+
+  /**
+   * 只可向前滚动的结果集
+   */
   FORWARD_ONLY(ResultSet.TYPE_FORWARD_ONLY),
+
+  /**
+   * 可以前后滚动的结果集，对修改不敏感
+   */
   SCROLL_INSENSITIVE(ResultSet.TYPE_SCROLL_INSENSITIVE),
+
+  /**
+   * 可以前后滚动的结果集，对修改敏感
+   */
   SCROLL_SENSITIVE(ResultSet.TYPE_SCROLL_SENSITIVE);
 
   private final int value;

@@ -40,6 +40,7 @@ public class ParameterExpression extends HashMap<String, String> {
   }
 
   private void parse(String expression) {
+    // 去除空格，获取表达式长度
     int p = skipWS(expression, 0);
     if (expression.charAt(p) == '(') {
       expression(expression, p + 1);
@@ -71,6 +72,13 @@ public class ParameterExpression extends HashMap<String, String> {
     }
   }
 
+  /**
+   * 去除空格，获取表达式长度
+   *
+   * @param expression
+   * @param p
+   * @return
+   */
   private int skipWS(String expression, int p) {
     for (int i = p; i < expression.length(); i++) {
       if (expression.charAt(i) > 0x20) {

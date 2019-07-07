@@ -18,9 +18,15 @@ package org.apache.ibatis.scripting.xmltags;
 import java.util.List;
 
 /**
+ * 组合 SQL 各组成部分
+ *
  * @author Clinton Begin
  */
 public class MixedSqlNode implements SqlNode {
+
+  /**
+   * SQL 各组装成部分
+   */
   private final List<SqlNode> contents;
 
   public MixedSqlNode(List<SqlNode> contents) {
@@ -29,6 +35,7 @@ public class MixedSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 逐个判断各个 sql 节点是否能生效
     contents.forEach(node -> node.apply(context));
     return true;
   }

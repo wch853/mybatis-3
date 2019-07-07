@@ -30,6 +30,9 @@ import java.util.*;
  */
 public class TypeAliasRegistry {
 
+  /**
+   * 别名-类型
+   */
   private final Map<String, Class<?>> typeAliases = new HashMap<>();
 
   public TypeAliasRegistry() {
@@ -93,6 +96,13 @@ public class TypeAliasRegistry {
     registerAlias("ResultSet", ResultSet.class);
   }
 
+  /**
+   * 根据别名获取类型，如果当前别名未注册，则尝试类加载
+   *
+   * @param string
+   * @param <T>
+   * @return
+   */
   @SuppressWarnings("unchecked")
   // throws class cast exception as well if types cannot be assigned
   public <T> Class<T> resolveAlias(String string) {
@@ -144,7 +154,7 @@ public class TypeAliasRegistry {
   }
 
   /**
-   * 注册类型别名，默认为简单类名，优先从Alias注解获取
+   * 注册类型别名，默认为简单类名，优先从 Alias 注解获取
    *
    * @param type
    */

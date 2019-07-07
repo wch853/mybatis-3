@@ -23,6 +23,9 @@ import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.scripting.defaults.DefaultParameterHandler;
 import org.apache.ibatis.session.Configuration;
 
+/**
+ * Mapper statement 语法类型驱动
+ */
 public interface LanguageDriver {
 
   /**

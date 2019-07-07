@@ -56,7 +56,7 @@ Based on mybatis-3.5.1
 ### 缓存实现
 - `org.apache.ibatis.cache.Cache`：缓存抽象接口。
 - `org.apache.ibatis.cache.impl.PerpetualCache`：使用 `HashMap` 作为缓存实现容器的 `Cache` 基本实现。
-- `org.apache.ibatis.cache.decorators.BlockingCache`：缓存阻塞装饰器。保证相同 `key` 只有一个线程执行数据库操作，其它线程在缓存层阻塞。
+- `org.apache.ibatis.cache.decorators.BlockingCache`：缓存阻塞装饰器。保证相同 `key` 同一时刻只有一个线程执行数据库操作，其它线程在缓存层阻塞。
 - `org.apache.ibatis.cache.decorators.FifoCache`：缓存先进先出装饰器。按写缓存顺序维护缓存 `key` 队列，缓存项超出指定大小，删除最先入队的缓存。
 - `org.apache.ibatis.cache.decorators.LruCache`：缓存最近最久未使用装饰器。基于 `LinkedHashMap` 维护了 `key` 的 `LRU` 顺序。
 - `org.apache.ibatis.cache.decorators.LoggingCache`：缓存日志装饰器。查询缓存时记录查询日志并统计命中率。
@@ -72,6 +72,47 @@ Based on mybatis-3.5.1
 - `org.apache.ibatis.binding.MapperProxyFactory`：`Mapper` 接口代理创建工厂。
 - `org.apache.ibatis.binding.MapperProxy`：`Mapper` 接口方法代理逻辑，封装 `SqlSession` 相关操作。
 - `org.apache.ibatis.binding.MapperMethod`：封装 `Mapper` 接口对应的方法和 `SQL` 执行信息。
+
+## 核心处理层
+### 配置解析
+- `org.apache.ibatis.builder.BaseBuilder`：为 `MyBatis` 初始化过程提供一系列工具方法。如别名转换、类型转换、类加载等。
+- `org.apache.ibatis.builder.xml.XMLConfigBuilder`：`XML` 配置解析入口。
+- `org.apache.ibatis.session.Configuration`：`MyBatis` 全局配置，包括运行行为、类型容器、别名容器、注册 `Mapper`、注册 `statement` 等。
+- `org.apache.ibatis.mapping.VendorDatabaseIdProvider`：根据数据源获取对应的厂商信息。
+- `org.apache.ibatis.builder.annotation.MapperAnnotationBuilder`：解析 `Mapper` 接口。
+- `org.apache.ibatis.builder.xml.XMLMapperBuilder`：解析 `Mapper` 文件。
+- `org.apache.ibatis.builder.MapperBuilderAssistant`：`Mapper` 文件解析工具。生成元素对象并设置到全局配置中。
+- `org.apache.ibatis.builder.CacheRefResolver`：缓存引用配置解析器，应用其它命名空间缓存配置到当前命名空间下。
+- `org.apache.ibatis.builder.IncompleteElementException`：当前映射文件引用了其它命名空间下的配置，而该配置还未加载到全局配置中时会抛出此异常。
+- `org.apache.ibatis.mapping.ResultMapping`：返回值字段映射关系对象。
+- `org.apache.ibatis.builder.ResultMapResolver`：`ResultMap` 解析器。
+- `org.apache.ibatis.mapping.ResultMap`：返回值映射对象。
+- `org.apache.ibatis.builder.xml.XMLStatementBuilder`：解析 `Mapper` 文件中的 `select|insert|update|delete` 元素。
+- `org.apache.ibatis.parsing.GenericTokenParser.GenericTokenParser`：搜索指定格式 `token` 并进行解析。
+- `org.apache.ibatis.parsing.TokenHandler`：`token` 处理器抽象接口。定义 `token` 以何种方式被解析。
+- `org.apache.ibatis.parsing.PropertyParser`：`${}` 类型 `token` 解析器。
+- `org.apache.ibatis.session.Configuration.StrictMap`：封装 `HashMap`，对键值存取有严格要求。
+- `org.apache.ibatis.builder.xml.XMLIncludeTransformer`：`include` 元素解析器。
+- `org.apache.ibatis.mapping.SqlSource`：`sql` 生成抽象接口。根据传入参数生成有效 `sql` 语句和参数绑定对象。
+- `org.apache.ibatis.scripting.xmltags.XMLScriptBuilder`：解析 `statement` 各个 `sql` 节点并进行组合。
+- `org.apache.ibatis.scripting.xmltags.SqlNode`：`sql` 节点抽象接口。用于判断当前 `sql` 节点是否可以加入到生效的 sql 语句中。
+- `org.apache.ibatis.scripting.xmltags.DynamicContext`：动态 `sql` 上下文。用于保存绑定参数和生效 `sql` 节点。
+- `org.apache.ibatis.scripting.xmltags.OgnlCache`：`ognl` 缓存工具，缓存表达式编译结果。
+- `org.apache.ibatis.scripting.xmltags.ExpressionEvaluator`：`ognl` 表达式计算工具。
+- `org.apache.ibatis.scripting.xmltags.MixedSqlNode`：`sql` 节点组合对象。
+- `org.apache.ibatis.scripting.xmltags.StaticTextSqlNode`：静态 `sql` 节点对象。
+- `org.apache.ibatis.scripting.xmltags.TextSqlNode`：`${}` 类型 `sql` 节点对象。
+- `org.apache.ibatis.scripting.xmltags.IfSqlNode`：`if` 元素 `sql` 节点对象。
+- `org.apache.ibatis.scripting.xmltags.TrimSqlNode`：`trim` 元素 `sql` 节点对象。
+- `org.apache.ibatis.scripting.xmltags.WhereSqlNode`：`where` 元素 `sql` 节点对象。
+- `org.apache.ibatis.scripting.xmltags.SetSqlNode`：`set` 元素 `sql` 节点对象。
+- `org.apache.ibatis.scripting.xmltags.ForEachSqlNode`：`foreach` 元素 `sql` 节点对象。
+- `org.apache.ibatis.scripting.xmltags.ChooseSqlNode`：`choose` 元素 `sql` 节点对象。
+- `org.apache.ibatis.scripting.xmltags.VarDeclSqlNode`：`bind` 元素 `sql` 节点对象。
+- `org.apache.ibatis.mapping.MappedStatement`：`statement` 解析对象。
+- `org.apache.ibatis.mapping.BoundSql`：可执行 `sql` 和参数绑定对象。
+- `org.apache.ibatis.scripting.xmltags.DynamicSqlSource`：根据参数动态生成有效 `sql` 和绑定参数。
+- `org.apache.ibatis.builder.SqlSourceBuilder`：解析 `#{}` 类型 `token` 并绑定参数对象。
 
 
 =====================================

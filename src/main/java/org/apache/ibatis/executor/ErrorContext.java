@@ -34,6 +34,11 @@ public class ErrorContext {
   private ErrorContext() {
   }
 
+  /**
+   * 获取当前线程对应的 ErrorContext
+   *
+   * @return
+   */
   public static ErrorContext instance() {
     ErrorContext context = LOCAL.get();
     if (context == null) {
