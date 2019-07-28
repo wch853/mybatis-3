@@ -113,6 +113,7 @@ Based on mybatis-3.5.1
 - `org.apache.ibatis.mapping.BoundSql`：可执行 `sql` 和参数绑定对象。
 - `org.apache.ibatis.scripting.xmltags.DynamicSqlSource`：根据参数动态生成有效 `sql` 和绑定参数。
 - `org.apache.ibatis.builder.SqlSourceBuilder`：解析 `#{}` 类型 `token` 并绑定参数对象。
+### sql 调用
 - `org.apache.ibatis.executor.Executor`：数据库操作执行器抽象接口。
 - `org.apache.ibatis.executor.BaseExecutor`：执行器基础抽象实现。
 - `org.apache.ibatis.executor.SimpleExecutor`：简单类型执行器。
