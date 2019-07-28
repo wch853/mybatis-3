@@ -15,27 +15,28 @@
  */
 package org.apache.ibatis.session.defaults;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import org.apache.ibatis.exceptions.ExceptionFactory;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.Environment;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.ExecutorType;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.TransactionIsolationLevel;
+import org.apache.ibatis.session.*;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 /**
+ * sql 会话创建工厂默认实现
+ *
  * @author Clinton Begin
  */
 public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
+  /**
+   * 全局配置
+   */
   private final Configuration configuration;
 
   public DefaultSqlSessionFactory(Configuration configuration) {
@@ -87,13 +88,20 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     return configuration;
   }
 
+  /**
+   * 基于数据源配置创建 sql 会话
+   */
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
       final Environment environment = configuration.getEnvironment();
+      // 获取事务工厂
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+      // 创建事务配置
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
+      // 创建执行器
       final Executor executor = configuration.newExecutor(tx, execType);
+      // 创建 sql 会话
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()
@@ -103,8 +111,16 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     }
   }
 
+  /**
+   * 基于数据库连接创建 sql 会话
+   *
+   * @param execType
+   * @param connection
+   * @return
+   */
   private SqlSession openSessionFromConnection(ExecutorType execType, Connection connection) {
     try {
+      // 获取自动提交配置
       boolean autoCommit;
       try {
         autoCommit = connection.getAutoCommit();
@@ -114,9 +130,13 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
         autoCommit = true;
       }
       final Environment environment = configuration.getEnvironment();
+      // 获取事务工厂
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+      // 创建事务配置
       final Transaction tx = transactionFactory.newTransaction(connection);
+      // 创建执行器
       final Executor executor = configuration.newExecutor(tx, execType);
+      // 创建 sql 会话
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error opening session.  Cause: " + e, e);
@@ -125,8 +145,12 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     }
   }
 
+  /**
+   * 获取生效数据源环境配置的事务工厂
+   */
   private TransactionFactory getTransactionFactoryFromEnvironment(Environment environment) {
     if (environment == null || environment.getTransactionFactory() == null) {
+      // 未配置数据源环境或事务工厂，默认使用 ManagedTransactionFactory
       return new ManagedTransactionFactory();
     }
     return environment.getTransactionFactory();

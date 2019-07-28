@@ -15,10 +15,6 @@
  */
 package org.apache.ibatis.executor.statement;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.ExecutorException;
@@ -33,21 +29,60 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 /**
+ * statement 处理器基础抽象实现
+ *
  * @author Clinton Begin
  */
 public abstract class BaseStatementHandler implements StatementHandler {
 
+  /**
+   * 全局配置
+   */
   protected final Configuration configuration;
+
+  /**
+   * 对象创建工厂
+   */
   protected final ObjectFactory objectFactory;
+
+  /**
+   * 类型转换器注册对象
+   */
   protected final TypeHandlerRegistry typeHandlerRegistry;
+
+  /**
+   * 结果集处理器
+   */
   protected final ResultSetHandler resultSetHandler;
+
+  /**
+   * 参数处理器
+   */
   protected final ParameterHandler parameterHandler;
 
+  /**
+   * 执行器对象
+   */
   protected final Executor executor;
+
+  /**
+   * statement 配置对象
+   */
   protected final MappedStatement mappedStatement;
+
+  /**
+   * 结果集范围对象
+   */
   protected final RowBounds rowBounds;
 
+  /**
+   * 可执行 sql 和参数绑定对象
+   */
   protected BoundSql boundSql;
 
   protected BaseStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
@@ -85,8 +120,11 @@ public abstract class BaseStatementHandler implements StatementHandler {
     ErrorContext.instance().sql(boundSql.getSql());
     Statement statement = null;
     try {
+      // 从连接中创建 statement 对象
       statement = instantiateStatement(connection);
+      // 设置超时时间
       setStatementTimeout(statement, transactionTimeout);
+      // 设置分批获取数据数量
       setFetchSize(statement);
       return statement;
     } catch (SQLException e) {

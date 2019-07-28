@@ -15,15 +15,6 @@
  */
 package org.apache.ibatis.session.defaults;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.ibatis.binding.BindingException;
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.exceptions.ExceptionFactory;
@@ -39,19 +30,44 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.*;
+
 /**
  * The default implementation for {@link SqlSession}.
  * Note that this class is not Thread-Safe.
+ *
+ * sql 会话默认实现。非线程安全。
  *
  * @author Clinton Begin
  */
 public class DefaultSqlSession implements SqlSession {
 
+  /**
+   * 全局配置
+   */
   private final Configuration configuration;
+
+  /**
+   * 执行器
+   */
   private final Executor executor;
 
+  /**
+   * 事务自动提交属性
+   */
   private final boolean autoCommit;
+
+  /**
+   * 事务未提交标志
+   */
   private boolean dirty;
+
+  /**
+   * 查询的游标列表
+   */
   private List<Cursor<?>> cursorList;
 
   public DefaultSqlSession(Configuration configuration, Executor executor, boolean autoCommit) {
@@ -77,6 +93,7 @@ public class DefaultSqlSession implements SqlSession {
     if (list.size() == 1) {
       return list.get(0);
     } else if (list.size() > 1) {
+      // 返回结果超出 1 个，抛出异常
       throw new TooManyResultsException("Expected one result (or null) to be returned by selectOne(), but found: " + list.size());
     } else {
       return null;
@@ -93,16 +110,24 @@ public class DefaultSqlSession implements SqlSession {
     return this.selectMap(statement, parameter, mapKey, RowBounds.DEFAULT);
   }
 
+  /**
+   * 将结果集转为 map
+   */
   @Override
   public <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
     final List<? extends V> list = selectList(statement, parameter, rowBounds);
+    // 返回值处理为 map 类型
     final DefaultMapResultHandler<K, V> mapResultHandler = new DefaultMapResultHandler<>(mapKey,
             configuration.getObjectFactory(), configuration.getObjectWrapperFactory(), configuration.getReflectorFactory());
+    // 统计返回值迭代次数
     final DefaultResultContext<V> context = new DefaultResultContext<>();
     for (V o : list) {
+      // 更新当前返回值对象
       context.nextResultObject(o);
+      // 根据指定的 map key，将返回结果转换为 map
       mapResultHandler.handleResult(context);
     }
+    // 获取生成的 map
     return mapResultHandler.getMappedResults();
   }
 
@@ -116,11 +141,15 @@ public class DefaultSqlSession implements SqlSession {
     return selectCursor(statement, parameter, RowBounds.DEFAULT);
   }
 
+  /**
+   * 查询游标
+   */
   @Override
   public <T> Cursor<T> selectCursor(String statement, Object parameter, RowBounds rowBounds) {
     try {
       MappedStatement ms = configuration.getMappedStatement(statement);
       Cursor<T> cursor = executor.queryCursor(ms, wrapCollection(parameter), rowBounds);
+      // 本地注册游标对象集合
       registerCursor(cursor);
       return cursor;
     } catch (Exception e) {
@@ -140,6 +169,9 @@ public class DefaultSqlSession implements SqlSession {
     return this.selectList(statement, parameter, RowBounds.DEFAULT);
   }
 
+  /**
+   * 查询结果集
+   */
   @Override
   public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
     try {
@@ -162,6 +194,9 @@ public class DefaultSqlSession implements SqlSession {
     select(statement, null, RowBounds.DEFAULT, handler);
   }
 
+  /**
+   * 调用存储过程
+   */
   @Override
   public void select(String statement, Object parameter, RowBounds rowBounds, ResultHandler handler) {
     try {
@@ -189,6 +224,9 @@ public class DefaultSqlSession implements SqlSession {
     return update(statement, null);
   }
 
+  /**
+   * 修改
+   */
   @Override
   public int update(String statement, Object parameter) {
     try {
@@ -217,6 +255,9 @@ public class DefaultSqlSession implements SqlSession {
     commit(false);
   }
 
+  /**
+   * 提交事务
+   */
   @Override
   public void commit(boolean force) {
     try {
@@ -234,6 +275,9 @@ public class DefaultSqlSession implements SqlSession {
     rollback(false);
   }
 
+  /**
+   * 回滚事务
+   */
   @Override
   public void rollback(boolean force) {
     try {
@@ -257,6 +301,9 @@ public class DefaultSqlSession implements SqlSession {
     }
   }
 
+  /**
+   * 关闭执行器
+   */
   @Override
   public void close() {
     try {
@@ -312,10 +359,16 @@ public class DefaultSqlSession implements SqlSession {
     cursorList.add(cursor);
   }
 
+  /**
+   * 非自动提交且事务未提交 || 强制提交或回滚 时返回 true
+   */
   private boolean isCommitOrRollbackRequired(boolean force) {
     return (!autoCommit && dirty) || force;
   }
 
+  /**
+   * 如果对象是集合、列表或数组，进行包装
+   */
   private Object wrapCollection(final Object object) {
     if (object instanceof Collection) {
       StrictMap<Object> map = new StrictMap<>();

@@ -18,12 +18,25 @@ package org.apache.ibatis.executor.result;
 import org.apache.ibatis.session.ResultContext;
 
 /**
+ * 返回值对象统计
+ *
  * @author Clinton Begin
  */
 public class DefaultResultContext<T> implements ResultContext<T> {
 
+  /**
+   * 当前返回值对象
+   */
   private T resultObject;
+
+  /**
+   * 统计迭代次数
+   */
   private int resultCount;
+
+  /**
+   * 迭代停止标志
+   */
   private boolean stopped;
 
   public DefaultResultContext() {

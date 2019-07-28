@@ -15,8 +15,6 @@
  */
 package org.apache.ibatis.executor.result;
 
-import java.util.Map;
-
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.ReflectorFactory;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
@@ -24,13 +22,25 @@ import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
 import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
 
+import java.util.Map;
+
 /**
+ * 返回值转 Map 处理器
+ *
  * @author Clinton Begin
  */
 public class DefaultMapResultHandler<K, V> implements ResultHandler<V> {
 
+  /**
+   * map 返回值容器
+   */
   private final Map<K, V> mappedResults;
+
+  /**
+   * key 属性名
+   */
   private final String mapKey;
+
   private final ObjectFactory objectFactory;
   private final ObjectWrapperFactory objectWrapperFactory;
   private final ReflectorFactory reflectorFactory;
@@ -46,9 +56,11 @@ public class DefaultMapResultHandler<K, V> implements ResultHandler<V> {
 
   @Override
   public void handleResult(ResultContext<? extends V> context) {
+    // 返回值对象
     final V value = context.getResultObject();
     final MetaObject mo = MetaObject.forObject(value, objectFactory, objectWrapperFactory, reflectorFactory);
     // TODO is that assignment always true?
+    // 返回值 key
     final K key = (K) mo.getValue(mapKey);
     mappedResults.put(key, value);
   }

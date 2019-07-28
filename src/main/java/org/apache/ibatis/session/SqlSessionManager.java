@@ -15,6 +15,10 @@
  */
 package org.apache.ibatis.session;
 
+import org.apache.ibatis.cursor.Cursor;
+import org.apache.ibatis.executor.BatchResult;
+import org.apache.ibatis.reflection.ExceptionUtil;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.InvocationHandler;
@@ -25,18 +29,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.ibatis.cursor.Cursor;
-import org.apache.ibatis.executor.BatchResult;
-import org.apache.ibatis.reflection.ExceptionUtil;
-
 /**
+ * sql 会话管理器
+ *
  * @author Larry Meadors
  */
 public class SqlSessionManager implements SqlSessionFactory, SqlSession {
 
+  /**
+   * sql 会话创建工厂
+   */
   private final SqlSessionFactory sqlSessionFactory;
+
+  /**
+   * sql 会话代理对象
+   */
   private final SqlSession sqlSessionProxy;
 
+  /**
+   * 保存线程对应 sql 会话
+   */
   private final ThreadLocal<SqlSession> localSqlSession = new ThreadLocal<>();
 
   private SqlSessionManager(SqlSessionFactory sqlSessionFactory) {
@@ -75,6 +87,9 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     return new SqlSessionManager(sqlSessionFactory);
   }
 
+  /**
+   * 设置当前线程对应的 sql 会话
+   */
   public void startManagedSession() {
     this.localSqlSession.set(openSession());
   }
@@ -337,13 +352,18 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     }
   }
 
+  /**
+   * sql 会话代理逻辑
+   */
   private class SqlSessionInterceptor implements InvocationHandler {
+
     public SqlSessionInterceptor() {
         // Prevent Synthetic Access
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      // 获取当前线程对应的 sql 会话对象并执行对应方法
       final SqlSession sqlSession = SqlSessionManager.this.localSqlSession.get();
       if (sqlSession != null) {
         try {
@@ -352,6 +372,7 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
           throw ExceptionUtil.unwrapThrowable(t);
         }
       } else {
+        // 如果当前线程没有对应的 sql 会话，默认创建不自动提交的 sql 会话
         try (SqlSession autoSqlSession = openSession()) {
           try {
             final Object result = method.invoke(autoSqlSession, args);

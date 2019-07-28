@@ -15,13 +15,6 @@
  */
 package org.apache.ibatis.executor.statement;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.keygen.Jdbc3KeyGenerator;
@@ -32,7 +25,12 @@ import org.apache.ibatis.mapping.ResultSetType;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
+import java.sql.*;
+import java.util.List;
+
 /**
+ * 预编译 statement 处理器
+ *
  * @author Clinton Begin
  */
 public class PreparedStatementHandler extends BaseStatementHandler {
@@ -61,7 +59,9 @@ public class PreparedStatementHandler extends BaseStatementHandler {
   @Override
   public <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
+    // 执行查询
     ps.execute();
+    // 处理结果集
     return resultSetHandler.handleResultSets(ps);
   }
 
@@ -72,17 +72,28 @@ public class PreparedStatementHandler extends BaseStatementHandler {
     return resultSetHandler.handleCursorResultSets(ps);
   }
 
+  /**
+   * 创建 PreparedStatement
+   *
+   * @param connection
+   * @return
+   * @throws SQLException
+   */
   @Override
   protected Statement instantiateStatement(Connection connection) throws SQLException {
     String sql = boundSql.getSql();
     if (mappedStatement.getKeyGenerator() instanceof Jdbc3KeyGenerator) {
+      // 需要返回值键值
       String[] keyColumnNames = mappedStatement.getKeyColumns();
       if (keyColumnNames == null) {
+        // 默认返回自动生成的主键
         return connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
       } else {
+        // 返回指定键值
         return connection.prepareStatement(sql, keyColumnNames);
       }
     } else if (mappedStatement.getResultSetType() == ResultSetType.DEFAULT) {
+      // 创建普通 statement
       return connection.prepareStatement(sql);
     } else {
       return connection.prepareStatement(sql, mappedStatement.getResultSetType().getValue(), ResultSet.CONCUR_READ_ONLY);
@@ -91,6 +102,7 @@ public class PreparedStatementHandler extends BaseStatementHandler {
 
   @Override
   public void parameterize(Statement statement) throws SQLException {
+    // 设置参数
     parameterHandler.setParameters((PreparedStatement) statement);
   }
 

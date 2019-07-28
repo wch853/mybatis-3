@@ -15,14 +15,6 @@
  */
 package org.apache.ibatis.executor;
 
-import java.sql.BatchUpdateException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.keygen.Jdbc3KeyGenerator;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
@@ -35,7 +27,17 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
+import java.sql.BatchUpdateException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
+ * 批量执行器
+ *
  * @author Jeff Butler
  */
 public class BatchExecutor extends BaseExecutor {
@@ -59,13 +61,19 @@ public class BatchExecutor extends BaseExecutor {
     final String sql = boundSql.getSql();
     final Statement stmt;
     if (sql.equals(currentSql) && ms.equals(currentStatement)) {
+      // 如果当前 sql 与上次传入 sql 相同且为相同的 MappedStatement，复用 statement 对象
       int last = statementList.size() - 1;
+      // 获取最后一个 statement 对象
       stmt = statementList.get(last);
+      // 设置超时时间
       applyTransactionTimeout(stmt);
+      // 设置参数
       handler.parameterize(stmt);//fix Issues 322
+      // 获取批量执行结果对象
       BatchResult batchResult = batchResultList.get(last);
       batchResult.addParameterObject(parameterObject);
     } else {
+      // 创建新的 statement 对象
       Connection connection = getConnection(ms.getStatementLog());
       stmt = handler.prepare(connection, transaction.getTimeout());
       handler.parameterize(stmt);    //fix Issues 322
@@ -74,6 +82,7 @@ public class BatchExecutor extends BaseExecutor {
       statementList.add(stmt);
       batchResultList.add(new BatchResult(ms, sql, parameterObject));
     }
+    // 执行 JDBC 批量添加 sql 语句操作
     handler.batch(stmt);
     return BATCH_UPDATE_RETURN_VALUE;
   }
@@ -107,9 +116,17 @@ public class BatchExecutor extends BaseExecutor {
     return handler.queryCursor(stmt);
   }
 
+  /**
+   * 批量执行 sql
+   *
+   * @param isRollback
+   * @return
+   * @throws SQLException
+   */
   @Override
   public List<BatchResult> doFlushStatements(boolean isRollback) throws SQLException {
     try {
+      // 批量执行结果
       List<BatchResult> results = new ArrayList<>();
       if (isRollback) {
         return Collections.emptyList();
@@ -119,12 +136,14 @@ public class BatchExecutor extends BaseExecutor {
         applyTransactionTimeout(stmt);
         BatchResult batchResult = batchResultList.get(i);
         try {
+          // 设置执行影响行数
           batchResult.setUpdateCounts(stmt.executeBatch());
           MappedStatement ms = batchResult.getMappedStatement();
           List<Object> parameterObjects = batchResult.getParameterObjects();
           KeyGenerator keyGenerator = ms.getKeyGenerator();
           if (Jdbc3KeyGenerator.class.equals(keyGenerator.getClass())) {
             Jdbc3KeyGenerator jdbc3KeyGenerator = (Jdbc3KeyGenerator) keyGenerator;
+            // 设置数据库生成的主键
             jdbc3KeyGenerator.processBatch(ms, stmt, parameterObjects);
           } else if (!NoKeyGenerator.class.equals(keyGenerator.getClass())) { //issue #141
             for (Object parameter : parameterObjects) {
@@ -136,14 +155,14 @@ public class BatchExecutor extends BaseExecutor {
         } catch (BatchUpdateException e) {
           StringBuilder message = new StringBuilder();
           message.append(batchResult.getMappedStatement().getId())
-              .append(" (batch index #")
-              .append(i + 1)
-              .append(")")
-              .append(" failed.");
+                  .append(" (batch index #")
+                  .append(i + 1)
+                  .append(")")
+                  .append(" failed.");
           if (i > 0) {
             message.append(" ")
-                .append(i)
-                .append(" prior sub executor(s) completed successfully, but will be rolled back.");
+                    .append(i)
+                    .append(" prior sub executor(s) completed successfully, but will be rolled back.");
           }
           throw new BatchExecutorException(message.toString(), e, results, batchResult);
         }

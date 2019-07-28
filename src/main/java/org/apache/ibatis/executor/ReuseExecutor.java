@@ -15,14 +15,6 @@
  */
 package org.apache.ibatis.executor;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.logging.Log;
@@ -33,7 +25,17 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
+ * statement 复用执行器
+ *
  * @author Clinton Begin
  */
 public class ReuseExecutor extends BaseExecutor {
@@ -55,8 +57,11 @@ public class ReuseExecutor extends BaseExecutor {
   @Override
   public <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
     Configuration configuration = ms.getConfiguration();
+    // 获取 statement 处理器
     StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
+    // 获取 statement 对象
     Statement stmt = prepareStatement(handler, ms.getStatementLog());
+    // 执行查询，不做关闭连接操作
     return handler.query(stmt, resultHandler);
   }
 
@@ -68,6 +73,12 @@ public class ReuseExecutor extends BaseExecutor {
     return handler.queryCursor(stmt);
   }
 
+  /**
+   * 批量关闭 statement 对象
+   *
+   * @param isRollback
+   * @return
+   */
   @Override
   public List<BatchResult> doFlushStatements(boolean isRollback) {
     for (Statement stmt : statementMap.values()) {
@@ -77,11 +88,20 @@ public class ReuseExecutor extends BaseExecutor {
     return Collections.emptyList();
   }
 
+  /**
+   * 创建 statement 对象
+   *
+   * @param handler
+   * @param statementLog
+   * @return
+   * @throws SQLException
+   */
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
     BoundSql boundSql = handler.getBoundSql();
     String sql = boundSql.getSql();
     if (hasStatementFor(sql)) {
+      // 如果本地容器中包含当前 sql 对应的 statement 对象，进行复用
       stmt = getStatement(sql);
       applyTransactionTimeout(stmt);
     } else {

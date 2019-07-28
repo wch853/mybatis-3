@@ -15,11 +15,6 @@
  */
 package org.apache.ibatis.executor.statement;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.ExecutorException;
@@ -29,15 +24,25 @@ import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+
 /**
+ * statement 处理器路由对象。根据 statement 类型选择处理器
+ *
  * @author Clinton Begin
  */
 public class RoutingStatementHandler implements StatementHandler {
 
+  /**
+   * statement 处理器代理对象。
+   */
   private final StatementHandler delegate;
 
   public RoutingStatementHandler(Executor executor, MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
-
+    // 根据 statement 类型选择对应的 statementHandler
     switch (ms.getStatementType()) {
       case STATEMENT:
         delegate = new SimpleStatementHandler(executor, ms, parameter, rowBounds, resultHandler, boundSql);

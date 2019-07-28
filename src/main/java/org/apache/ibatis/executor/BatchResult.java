@@ -15,20 +15,36 @@
  */
 package org.apache.ibatis.executor;
 
+import org.apache.ibatis.mapping.MappedStatement;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.ibatis.mapping.MappedStatement;
-
 /**
+ * sql 批量执行结果
+ *
  * @author Jeff Butler
  */
 public class BatchResult {
 
+  /**
+   * 对应的 statement 对象
+   */
   private final MappedStatement mappedStatement;
+
+  /**
+   * 执行的 sql
+   */
   private final String sql;
+
+  /**
+   * 参数列表
+   */
   private final List<Object> parameterObjects;
 
+  /**
+   * 影响行数
+   */
   private int[] updateCounts;
 
   public BatchResult(MappedStatement mappedStatement, String sql) {

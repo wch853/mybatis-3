@@ -113,7 +113,26 @@ Based on mybatis-3.5.1
 - `org.apache.ibatis.mapping.BoundSql`：可执行 `sql` 和参数绑定对象。
 - `org.apache.ibatis.scripting.xmltags.DynamicSqlSource`：根据参数动态生成有效 `sql` 和绑定参数。
 - `org.apache.ibatis.builder.SqlSourceBuilder`：解析 `#{}` 类型 `token` 并绑定参数对象。
+- `org.apache.ibatis.executor.Executor`：数据库操作执行器抽象接口。
+- `org.apache.ibatis.executor.BaseExecutor`：执行器基础抽象实现。
+- `org.apache.ibatis.executor.SimpleExecutor`：简单类型执行器。
+- `org.apache.ibatis.executor.ReuseExecutor`：`statement` 复用执行器。
+- `org.apache.ibatis.executor.BatchExecutor`：批量执行器。
+- `org.apache.ibatis.executor.CachingExecutor`：二级缓存执行器。
+- `org.apache.ibatis.executor.statement.StatementHandler`：`statement` 处理器抽象接口。
+- `org.apache.ibatis.executor.statement.BaseStatementHandler`：`statement` 处理器基础抽象实现。
+- `org.apache.ibatis.executor.statement.RoutingStatementHandler`：`statement` 处理器路由对象。
+- `org.apache.ibatis.executor.statement.SimpleStatementHandler`：简单 `statement` 处理器。
+- `org.apache.ibatis.executor.statement.PreparedStatementHandler`：预编译 `statement` 处理器。
+- `org.apache.ibatis.executor.statement.CallableStatementHandler`：存储过程 `statement` 处理器。
+- `org.apache.ibatis.cache.TransactionalCacheManager`：缓存事务管理器。
 
+### 接口层
+- `org.apache.ibatis.session.SqlSessionFactory`：`sql` 会话创建工厂。
+- `org.apache.ibatis.session.defaults.DefaultSqlSessionFactory`： `sql` 会话创建工厂默认实现。
+- `org.apache.ibatis.session.SqlSession`：`sql` 会话。
+- `org.apache.ibatis.session.defaults.DefaultSqlSession`：`sql` 会话默认实现。
+- `org.apache.ibatis.session.SqlSessionManager`：`sql` 会话管理器。
 
 =====================================
 

@@ -15,10 +15,6 @@
  */
 package org.apache.ibatis.scripting.defaults;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.List;
-
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.mapping.BoundSql;
@@ -32,7 +28,13 @@ import org.apache.ibatis.type.TypeException;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.List;
+
 /**
+ * 默认参数处理器
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -61,13 +63,17 @@ public class DefaultParameterHandler implements ParameterHandler {
   @Override
   public void setParameters(PreparedStatement ps) {
     ErrorContext.instance().activity("setting parameters").object(mappedStatement.getParameterMap().getId());
+    // 获取参数映射对象
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
     if (parameterMappings != null) {
       for (int i = 0; i < parameterMappings.size(); i++) {
         ParameterMapping parameterMapping = parameterMappings.get(i);
         if (parameterMapping.getMode() != ParameterMode.OUT) {
+          // 参数类型不为存储过程的出参
           Object value;
+          // 获取参数名
           String propertyName = parameterMapping.getProperty();
+          // 获取参数值
           if (boundSql.hasAdditionalParameter(propertyName)) { // issue #448 ask first for additional params
             value = boundSql.getAdditionalParameter(propertyName);
           } else if (parameterObject == null) {
@@ -84,6 +90,7 @@ public class DefaultParameterHandler implements ParameterHandler {
             jdbcType = configuration.getJdbcTypeForNull();
           }
           try {
+            // 设置参数值
             typeHandler.setParameter(ps, i + 1, value, jdbcType);
           } catch (TypeException | SQLException e) {
             throw new TypeException("Could not set parameters for mapping: " + parameterMapping + ". Cause: " + e, e);

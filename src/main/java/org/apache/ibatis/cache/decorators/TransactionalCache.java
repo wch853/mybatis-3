@@ -81,6 +81,7 @@ public class TransactionalCache implements Cache {
     // issue #116
     Object object = delegate.getObject(key);
     if (object == null) {
+      // 放入未命中缓存的 key 的队列
       entriesMissedInCache.add(key);
     }
     // issue #146
@@ -98,6 +99,7 @@ public class TransactionalCache implements Cache {
 
   @Override
   public void putObject(Object key, Object object) {
+    // 缓存先写入待提交容器
     entriesToAddOnCommit.put(key, object);
   }
 
@@ -112,14 +114,21 @@ public class TransactionalCache implements Cache {
     entriesToAddOnCommit.clear();
   }
 
+  /**
+   * 事务提交
+   */
   public void commit() {
     if (clearOnCommit) {
       delegate.clear();
     }
+    // 提交缓存
     flushPendingEntries();
     reset();
   }
 
+  /**
+   * 事务回滚
+   */
   public void rollback() {
     unlockMissedEntries();
     reset();

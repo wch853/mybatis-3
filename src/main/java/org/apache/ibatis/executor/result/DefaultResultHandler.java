@@ -15,14 +15,16 @@
  */
 package org.apache.ibatis.executor.result;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
+ * 默认的结果集处理器
+ *
  * @author Clinton Begin
  */
 public class DefaultResultHandler implements ResultHandler<Object> {

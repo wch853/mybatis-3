@@ -15,12 +15,6 @@
  */
 package org.apache.ibatis.executor;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.logging.Log;
@@ -31,7 +25,15 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collections;
+import java.util.List;
+
 /**
+ * 简单类型执行器
+ *
  * @author Clinton Begin
  */
 public class SimpleExecutor extends BaseExecutor {
@@ -58,10 +60,14 @@ public class SimpleExecutor extends BaseExecutor {
     Statement stmt = null;
     try {
       Configuration configuration = ms.getConfiguration();
+      // 创建 statement 处理器
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
+      // 创建 statement
       stmt = prepareStatement(handler, ms.getStatementLog());
+      // 执行查询
       return handler.query(stmt, resultHandler);
     } finally {
+      // 关闭 statement
       closeStatement(stmt);
     }
   }
@@ -82,8 +88,11 @@ public class SimpleExecutor extends BaseExecutor {
 
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
+    // 获取代理连接对象
     Connection connection = getConnection(statementLog);
+    // 创建 statement 对象
     stmt = handler.prepare(connection, transaction.getTimeout());
+    // 设置 statement 参数
     handler.parameterize(stmt);
     return stmt;
   }

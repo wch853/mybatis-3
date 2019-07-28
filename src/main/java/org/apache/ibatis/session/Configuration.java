@@ -719,12 +719,20 @@ public class Configuration {
     return MetaObject.forObject(object, objectFactory, objectWrapperFactory, reflectorFactory);
   }
 
+  /**
+   * 创建参数处理器
+   */
   public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
+    // 创建参数处理器
     ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement, parameterObject, boundSql);
+    // 应用插件
     parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler);
     return parameterHandler;
   }
 
+  /**
+   * 创建结果集处理器
+   */
   public ResultSetHandler newResultSetHandler(Executor executor, MappedStatement mappedStatement, RowBounds rowBounds, ParameterHandler parameterHandler,
       ResultHandler resultHandler, BoundSql boundSql) {
     ResultSetHandler resultSetHandler = new DefaultResultSetHandler(executor, mappedStatement, parameterHandler, resultHandler, boundSql, rowBounds);
@@ -732,8 +740,13 @@ public class Configuration {
     return resultSetHandler;
   }
 
+  /**
+   * 创建 statement 处理器
+   */
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    // StatementHandler 包装对象，根据 statement 类型创建代理处理器，并将实际操作委托给代理处理器处理
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+    // 应用插件
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;
   }
@@ -742,7 +755,11 @@ public class Configuration {
     return newExecutor(transaction, defaultExecutorType);
   }
 
+  /**
+   * 创建执行器
+   */
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+    // 默认类型为 simple
     executorType = executorType == null ? defaultExecutorType : executorType;
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
@@ -754,8 +771,10 @@ public class Configuration {
       executor = new SimpleExecutor(this, transaction);
     }
     if (cacheEnabled) {
+      // 如果全局缓存打开，使用 CachingExecutor 代理执行器
       executor = new CachingExecutor(executor);
     }
+    // 应用插件
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }

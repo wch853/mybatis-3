@@ -15,27 +15,21 @@
  */
 package org.apache.ibatis.executor.statement;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.ExecutorException;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
-import org.apache.ibatis.mapping.BoundSql;
-import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.ParameterMapping;
-import org.apache.ibatis.mapping.ParameterMode;
-import org.apache.ibatis.mapping.ResultSetType;
+import org.apache.ibatis.mapping.*;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.type.JdbcType;
 
+import java.sql.*;
+import java.util.List;
+
 /**
+ * 存储过程 statement 处理器
+ *
  * @author Clinton Begin
  */
 public class CallableStatementHandler extends BaseStatementHandler {
@@ -93,9 +87,16 @@ public class CallableStatementHandler extends BaseStatementHandler {
   @Override
   public void parameterize(Statement statement) throws SQLException {
     registerOutputParameters((CallableStatement) statement);
+    // 设置入参
     parameterHandler.setParameters((CallableStatement) statement);
   }
 
+  /**
+   * 注册 存储过程出参
+   *
+   * @param cs
+   * @throws SQLException
+   */
   private void registerOutputParameters(CallableStatement cs) throws SQLException {
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
     for (int i = 0, n = parameterMappings.size(); i < n; i++) {
